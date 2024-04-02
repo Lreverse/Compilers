@@ -8,6 +8,7 @@ relop  >|<|>=|<=|==|!=
 decimal  0|[1-9]{digit}*
 octal  0[0-7]+
 hex  0[xX]([0-9a-f]+|[0-9A-F]+)
+exponent_form  ({digit}*\.?{digit}+|{digit}+\.)[Ee][+-]?{digit}+
 
 %%
 
@@ -18,7 +19,7 @@ if  { printf("IF\n"); }
 else  { printf("ELSE\n"); }
 while  { printf("WHILE\n"); }
 {decimal}|{octal}|{hex} { printf("INT\n"); }
-{digit}*\.{digit}+|({digit}*\.?{digit}+|{digit}+\.)[Ee][+-]?{digit}+  { printf("FLOAT\n"); }
+{digit}*\.{digit}+|{exponent_form}  { printf("FLOAT\n"); }
 [_a-zA-Z][_a-zA-Z0-9]*  { printf("ID\n"); }
 " "|\t  { ;}
 ;  { printf("SEMI\n"); }
