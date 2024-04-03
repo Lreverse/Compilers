@@ -1,6 +1,13 @@
 %option yylineno
 %{
-    #include <stdio.h>
+    #include "syntax.tab.h"
+
+    int yycolumn = 1;
+    #define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
 %}
 digit  [0-9]
 letter [a-zA-Z]
@@ -12,37 +19,38 @@ exponent_form  ({digit}*\.?{digit}+|{digit}+\.)[Ee][+-]?{digit}+
 
 %%
 
-int|float  { printf("TYPE\n"); }
-struct  { printf("STRUCT\n"); }
-return  { printf("RETURN\n"); }
-if  { printf("IF\n"); }
-else  { printf("ELSE\n"); }
-while  { printf("WHILE\n"); }
-{decimal}|{octal}|{hex} { printf("INT\n"); }
-{digit}*\.{digit}+|{exponent_form}  { printf("FLOAT\n"); }
-[_a-zA-Z][_a-zA-Z0-9]*  { printf("ID\n"); }
+int|float  { return TYPE; }
+struct  { return STRUCT; }
+return  { return RETURN; }
+if  { return IF; }
+else  { return ELSE; }
+while  { return WHILE; }
+{decimal}|{octal}|{hex} { return INT; }
+{digit}*\.{digit}+|{exponent_form}  { return FLOAT; }
+[_a-zA-Z][_a-zA-Z0-9]*  { return ID; }
 " "|\t  { ;}
-;  { printf("SEMI\n"); }
-,  { printf("COMMA\n"); }
-=  { printf("ASSIGNOP\n"); }
-{relop}  { printf("RELOP\n"); }
-"+"  { printf("PLUS\n"); }
-"-"  { printf("MINUS\n"); }
-"*"  { printf("STAR\n"); }
-"/"  { printf("DIV\n"); }
-"&&"  { printf("AND\n"); }
-"||"  { printf("OR\n"); }
-"."  { printf("DOT\n"); }
-!  { printf("NOT\n"); }
-"("  { printf("LR\n"); }
-")"  { printf("RP\n"); }
-"["  { printf("LB\n"); }
-"]"  { printf("RB\n"); }
-"{"  { printf("LC\n"); }
-"}"  { printf("RC\n"); }
+;  { return SEMI; }
+,  { return COMMA; }
+=  { return ASSIGNOP; }
+{relop}  { return RELOP; }
+"+"  { return PLUS; }
+"-"  { return MINUS; }
+"*"  { return STAR; }
+"/"  { return DIV; }
+"&&"  { return AND; }
+"||"  { return OR; }
+"."  { return DOT; }
+!  { return NOT; }
+"("  { return LR; }
+")"  { return RP; }
+"["  { return LB; }
+"]"  { return RB; }
+"{"  { return LC; }
+"}"  { return RC; }
 .  {
     printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
 }
+\n  { yycolumn = 1; }
 
 %%
 int main(int argc, char**argv) {
