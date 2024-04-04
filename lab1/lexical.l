@@ -41,7 +41,7 @@ while  { return WHILE; }
 "||"  { return OR; }
 "."  { return DOT; }
 !  { return NOT; }
-"("  { return LR; }
+"("  { return LP; }
 ")"  { return RP; }
 "["  { return LB; }
 "]"  { return RB; }
@@ -53,13 +53,3 @@ while  { return WHILE; }
 \n  { yycolumn = 1; }
 
 %%
-int main(int argc, char**argv) {
-    if (argc > 1) {
-        if ( !(yyin = fopen(argv[1], "r")) ) {
-            perror(argv[1]);
-            return 1;
-        }
-    }
-    yylex();
-    return 0;
-}
