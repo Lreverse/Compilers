@@ -1,6 +1,7 @@
 %locations
 %{
     #include "lex.yy.c"
+    void yyerror(char* msg);
 %}
 
 %token TYPE
@@ -46,7 +47,7 @@ ExtDecList : VarDec
   | VarDec COMMA ExtDecList
   ;
 
-  /* Specifiers */
+/* Specifiers */
 Specifier : TYPE
   | StructSpecifier
   ;
@@ -59,7 +60,7 @@ OptTag : ID
 Tag : ID
   ;
 
-  /* Declarators */
+/* Declarators */
 VarDec : ID
   | VarDec LB INT RB
   ;
@@ -125,7 +126,19 @@ Args : Exp COMMA Args
 
 /* Comments */
 
+/* error */
+Stmt : error SEMI
+  ;
+CompSt : error RC
+  ;
+VarDec : error RB
+  ;
+FunDec : error RP
+  ;
+ExtDef : error SEMI
+  ;
+
 %%
-yyerror(char* msg) {
+void yyerror(char* msg) {
     fprintf(stderr, "Error type B at Line %d: %s\n", yylineno, msg);
 }
