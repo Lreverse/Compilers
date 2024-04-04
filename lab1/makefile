@@ -11,15 +11,18 @@ TARGET = parser
 
 all: lex.yy.c $(TARGET) 
 
-
 lex.yy.c: lexical.l
-	$(FLEX) $^
+	@echo flex is running...
+	@$(FLEX) $^
 
 syntax.tab.c syntax.tab.h: syntax.y
-	$(BISON) $^ $(BISONFLAGS)
+	@echo bison is running...
+	@$(BISON) $^ $(BISONFLAGS)
 
 $(TARGET): $(OBJS)
-	$(CC) $^ $(CFLAGS) -o $@ 
+	@echo gcc is runing...
+	@$(CC) $^ $(CFLAGS) -o $@ 
+	@echo complete!
 
 clean:
 	@echo clean right now....

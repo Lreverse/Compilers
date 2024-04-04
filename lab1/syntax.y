@@ -6,30 +6,29 @@
 %token TYPE
 %token STRUCT
 %token RETURN
-%token IF
-%token ELSE
+%token IF ELSE
 %token WHILE
 %token INT
 %token FLOAT
 %token ID
-%token SEMI
-%token COMMA
-%token ASSIGNOP
-%token RELOP
-%token PLUS
-%token MINUS
-%token STAR
-%token DIV
-%token AND
-%token OR
+%token SEMI COMMA
+%token ASSIGNOP RELOP
+%token PLUS MINUS STAR DIV
+%token AND OR NOT
 %token DOT
-%token NOT
-%token LP
-%token RP
-%token LB
-%token RB
-%token LC
-%token RC
+%token LP RP LB RB LC RC
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+%right ASSIGNOP
+%left OR
+%left AND
+%left RELOP
+%left PLUS MINUS
+%left STAR DIV
+%right NOT
+%left LP RP LB RB DOT
+
 
 
 %%
@@ -82,7 +81,7 @@ StmtList : Stmt StmtList
 Stmt : Exp SEMI
   | CompSt
   | RETURN Exp SEMI
-  | IF LP Exp RP Stmt
+  | IF LP Exp RP Stmt  %prec LOWER_THAN_ELSE
   | IF LP Exp RP Stmt ELSE Stmt
   | WHILE LP Exp RP Stmt
   ;
