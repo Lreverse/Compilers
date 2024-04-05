@@ -11,6 +11,8 @@
     struct Tnode* type_Tnode;
 }
 
+
+/* 定义终结符和其对应的类型 */
 %token <type_Tnode> TYPE
 %token <type_Tnode> STRUCT
 %token <type_Tnode> RETURN
@@ -26,6 +28,7 @@
 %token <type_Tnode> DOT
 %token <type_Tnode> LP RP LB RB LC RC
 
+/* 定义非终结符的类型 */
 %type <type_Tnode> Program ExtDefList ExtDef ExtDecList
 %type <type_Tnode> Specifier StructSpecifier OptTag Tag
 %type <type_Tnode> VarDec FunDec VarList ParamDec
@@ -33,6 +36,7 @@
 %type <type_Tnode> DefList Def DecList Dec
 %type <type_Tnode> Exp Args
 
+/* 优先级和结合性 */
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 %right ASSIGNOP
@@ -140,16 +144,17 @@ Args : Exp COMMA Args  { $$=creatTnode(1, "Args", ""); appendTnode($$, 3, $1, $2
 /* Comments */
 
 /* error */
-Stmt : error SEMI
+Stmt : error SEMI  {}
   ;
-CompSt : error RC
+CompSt : error RC  {}
   ;
-VarDec : error RB
+VarDec : error RB  {}
   ;
-FunDec : error RP
+FunDec : error RP  {}
   ;
-ExtDef : error SEMI
+ExtDef : error SEMI  {}
   ;
+
 
 %%
 void yyerror(char* msg)
