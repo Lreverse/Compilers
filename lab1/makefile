@@ -6,7 +6,7 @@ BISON = bison
 FLEXFLAGS =
 BISONFLAGS = -d
 
-OBJS = main.c syntax.tab.c
+OBJS = main.c Tree.c syntax.tab.c 
 TARGET = parser
 
 all: lex.yy.c $(TARGET) 
@@ -17,7 +17,7 @@ lex.yy.c: lexical.l
 
 syntax.tab.c syntax.tab.h: syntax.y
 	@echo bison is running...
-	@$(BISON) $^ $(BISONFLAGS)
+	@$(BISON) $< $(BISONFLAGS)
 
 $(TARGET): $(OBJS)
 	@echo gcc is runing...

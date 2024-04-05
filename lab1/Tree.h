@@ -20,7 +20,7 @@ Tnode *creatTnode(int type, char *name, char *value);
 // 添加节点（num为添加的节点个数）
 void appendTnode(Tnode *parent, int num, ...);
 
-// 打印语法分析树
+// 打印语法分析树（先序遍历）
 void printParseTree(Tnode *root);
 
 #endif

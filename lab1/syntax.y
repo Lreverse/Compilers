@@ -3,15 +3,12 @@
     #include "lex.yy.c"
     #include "Tree.h"
     void yyerror(char* msg);
-    Tnode *root = NULL;  // 语法树的根节点
-    Error_flag = 0;  // 判断源文件是否出现语法错误
+    extern Tnode* root;
+    extern int Error_flag;
 %}
 
 %union {
-  int type_int;
-  float type_float;
-  double type_double;
-  Tnode* type_Tnode;
+    struct Tnode* type_Tnode;
 }
 
 %token <type_Tnode> TYPE
@@ -29,6 +26,13 @@
 %token <type_Tnode> DOT
 %token <type_Tnode> LP RP LB RB LC RC
 
+%type <type_Tnode> Program ExtDefList ExtDef ExtDecList
+%type <type_Tnode> Specifier StructSpecifier OptTag Tag
+%type <type_Tnode> VarDec FunDec VarList ParamDec
+%type <type_Tnode> CompSt StmtList Stmt
+%type <type_Tnode> DefList Def DecList Dec
+%type <type_Tnode> Exp Args
+
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 %right ASSIGNOP
@@ -43,14 +47,14 @@
 
 %%
 /* High-level Definitions */
-Program : ExtDefList  { $$=creatTnode(1, "Program", ""); appendTnode($$, 1, $1); root=$$}
+Program : ExtDefList  { $$=creatTnode(1, "Program", ""); appendTnode($$, 1, $1); root=$$; }
   ;
 ExtDefList : ExtDef ExtDefList  { $$=creatTnode(1, "ExtDefList", ""); appendTnode($$, 2, $1, $2); }
   |  { $$=NULL; }
   ;
 ExtDef : Specifier ExtDecList SEMI  { $$=creatTnode(1, "ExtDef", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Specifier SEMI  { $$=creatTnode(1, "ExtDefList", ""); appendTnode($$, 2, $1, $2); }
-  | Specifier FunDec CompSt  { $$=creatTnode(1, "ExtDefList", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Specifier SEMI  { $$=creatTnode(1, "ExtDef", ""); appendTnode($$, 2, $1, $2); }
+  | Specifier FunDec CompSt  { $$=creatTnode(1, "ExtDef", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
 ExtDecList : VarDec  { $$=creatTnode(1, "ExtDecList", ""); appendTnode($$, 1, $1); }
   | VarDec COMMA ExtDecList  { $$=creatTnode(1, "ExtDecList", ""); appendTnode($$, 3, $1, $2, $3); }
