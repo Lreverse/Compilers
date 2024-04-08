@@ -16,7 +16,7 @@ letter [a-zA-Z]
 relop  >|<|>=|<=|==|!=
 decimal  0|[1-9]{digit}*
 octal  0[0-7]+
-hex  0[xX]([0-9a-f]+|[0-9A-F]+)
+hex  0[xX][0-9a-fA-F]+
 exponent_form  ({digit}*\.?{digit}+|{digit}+\.)[Ee][+-]?{digit}+
 
 %%
@@ -26,8 +26,29 @@ return  { yylval.type_Tnode = creatTnode(0, "RETURN", yytext); return RETURN; }
 if  { yylval.type_Tnode = creatTnode(0, "IF", yytext); return IF; }
 else  { yylval.type_Tnode = creatTnode(0, "ELSE", yytext); return ELSE; }
 while  { yylval.type_Tnode = creatTnode(0, "WHILE", yytext); return WHILE; }
-{decimal}|{octal}|{hex} { yylval.type_Tnode = creatTnode(0, "INT", yytext); return INT; }
-{digit}*\.{digit}+|{exponent_form}  { yylval.type_Tnode = creatTnode(0, "FLOAT", yytext); return FLOAT; }
+{decimal}|{octal}|{hex} {
+    char str[32] = "";
+    int num;
+    if (yytext[0] == '0' && yytext[1] != '\0') {
+        if (yytext[1] == 'x' | yytext[1] == 'X')
+            sscanf(yytext, "%x", &num);   // 16进制字符串转成10进制数
+        else
+            sscanf(yytext, "%o", &num);   // 8进制字符串转成10进制数
+        sprintf(str, "%d", num);
+        yylval.type_Tnode = creatTnode(0, "INT", str);
+    }
+    else
+        yylval.type_Tnode = creatTnode(0, "INT", yytext);
+    return INT; 
+}
+{digit}*\.{digit}+|{exponent_form}  { 
+    char str[32] = "";
+    double num;
+    sscanf(yytext, "%lf", &num);    // 以double的格式输入
+    sprintf(str, "%lf", num);
+    yylval.type_Tnode = creatTnode(0, "FLOAT", str); 
+    return FLOAT; 
+}
 [_a-zA-Z][_a-zA-Z0-9]*  { yylval.type_Tnode = creatTnode(0, "ID", yytext); return ID; }
 " "|\t  { ;}
 ;  { yylval.type_Tnode = creatTnode(0, "SEMI", yytext); return SEMI; }
