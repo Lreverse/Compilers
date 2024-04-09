@@ -41,7 +41,7 @@ while  { yylval.type_Tnode = creatTnode(0, "WHILE", yytext); return WHILE; }
         yylval.type_Tnode = creatTnode(0, "INT", yytext);
     return INT; 
 }
-{digit}*\.{digit}+|{exponent_form}  { 
+{digit}+\.{digit}+|{exponent_form}  { 
     char str[32] = "";
     double num;
     sscanf(yytext, "%lf", &num);    // 以double的格式输入
