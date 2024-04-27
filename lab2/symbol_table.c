@@ -55,8 +55,11 @@ void printHashT(symbol_Table Table)
         {
             int kind = p->type->kind;
             printf("%d:  %s  kind(%d)  ", j, p->name, kind);
+
+            // 类型0：basic
             if (kind == 0)
                 printf("basic=%d\n", p->type->u.basic);
+            // 类型1：array
             else if (kind == 1)
             {
                 Type elem = p->type->u.array.elem;
@@ -67,6 +70,62 @@ void printHashT(symbol_Table Table)
                     elem = elem->u.array.elem;
                 }
                 printf("\n");
+            }
+            // 类型3：function
+            else if (kind == 3)
+            {
+                int argc = p->type->u.function.argc;
+                FieldList argv = p->type->u.function.argv;
+                printf("%s(", p->name);
+                while(argv)
+                {
+                    // 判断参数类型
+                    int param_kind = argv->type->kind;
+                    // 形参为basic
+                    if (param_kind == 0)
+                    {
+                        if (argv->type->u.basic == BASIC_INT)
+                            printf("int ");
+                        else if (argv->type->u.basic == BASIC_FLOAT)
+                            printf("float ");
+                        printf("%s", argv->name); 
+                    }
+                    // 形参为array
+                    else if (param_kind == 1)
+                    {
+                        int temp[32] = {0};
+                        Type elem = argv->type->u.array.elem;
+                        temp[0] = argv->type->u.array.size;   
+                        // temp用来保存数组每个维度的值，因为类型在链表末尾，为确保输出顺序，需要先存储维度，最后再打印
+                        // printf("[%d]", argv->type->u.array.size);
+                        int i = 1;
+                        while (elem)
+                        {
+                            if (elem->kind == 0)
+                            {
+                                if (elem->u.basic == BASIC_INT)
+                                    printf("int ");
+                                else if (elem->u.basic == BASIC_FLOAT)
+                                    printf("float ");
+                                break;
+                            }
+                            else if (elem->kind == 1)
+                            {
+                                // printf("[%d]", elem->u.array.size);
+                                temp[i] = elem->u.array.size;
+                                i++;
+                                elem = elem->u.array.elem;
+                            }
+                        }
+                        for (int j; j < i; j++)
+                            printf("[%d]", temp[j]);
+                        printf("ww%s", argv->name); 
+                    }
+                    argv = argv->tail;
+                    if (argv)
+                        printf(", ");
+                }
+                printf(")\n");
             }
             p = p->next;
             j++;
