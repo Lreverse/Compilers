@@ -117,9 +117,9 @@ void printHashT(symbol_Table Table)
                                 elem = elem->u.array.elem;
                             }
                         }
-                        for (int j; j < i; j++)
+                        printf("%s", argv->name); 
+                        for (int j = 0; j < i; j++)
                             printf("[%d]", temp[j]);
-                        printf("ww%s", argv->name); 
                     }
                     argv = argv->tail;
                     if (argv)
