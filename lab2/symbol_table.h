@@ -6,6 +6,7 @@
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct HashNode_* HashNode;
+typedef struct symbol_Table_* symbol_Table;
 
 /* 定义类型结构 */
 struct Type_
@@ -35,10 +36,16 @@ struct HashNode_
     HashNode next;   // 发生冲突时，指向下一个结点
 };
 
+/* 符号表 */
+struct symbol_Table_
+{
+    HashNode HashT[Table_Size];
+};
 
-/* 哈希函数 */
+/* 哈希相关函数 */
 unsigned int hash_pjw(char *name);
-
-void Insert(HashNode hashT, char *name);
+void InitHashT(symbol_Table Table);
+HashNode CreateNode(char *name, Type type);
+void InsertNode(symbol_Table Table, HashNode node);
 
 #endif

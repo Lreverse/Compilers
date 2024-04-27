@@ -73,7 +73,6 @@ void printParseTree(Tnode *node)
     Tnode *p = node->lchild;
     while (p != NULL)
     {
-
         printParseTree(p);
         p = p->rsibling;
     }
