@@ -51,94 +51,94 @@
 
 %%
 /* High-level Definitions */
-Program : ExtDefList  { $$=creatTnode(1, "Program", ""); appendTnode($$, 1, $1); root=$$; }
+Program : ExtDefList  { $$=createTnode(1, "Program", ""); appendTnode($$, 1, $1); root=$$; }
   ;
-ExtDefList : ExtDef ExtDefList  { $$=creatTnode(1, "ExtDefList", ""); appendTnode($$, 2, $1, $2); }
+ExtDefList : ExtDef ExtDefList  { $$=createTnode(1, "ExtDefList", ""); appendTnode($$, 2, $1, $2); }
   |  { $$=NULL; }
   ;
-ExtDef : Specifier ExtDecList SEMI  { $$=creatTnode(1, "ExtDef", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Specifier SEMI  { $$=creatTnode(1, "ExtDef", ""); appendTnode($$, 2, $1, $2); }
-  | Specifier FunDec CompSt  { $$=creatTnode(1, "ExtDef", ""); appendTnode($$, 3, $1, $2, $3); }
+ExtDef : Specifier ExtDecList SEMI  { $$=createTnode(1, "ExtDef", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Specifier SEMI  { $$=createTnode(1, "ExtDef", ""); appendTnode($$, 2, $1, $2); }
+  | Specifier FunDec CompSt  { $$=createTnode(1, "ExtDef", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
-ExtDecList : VarDec  { $$=creatTnode(1, "ExtDecList", ""); appendTnode($$, 1, $1); }
-  | VarDec COMMA ExtDecList  { $$=creatTnode(1, "ExtDecList", ""); appendTnode($$, 3, $1, $2, $3); }
+ExtDecList : VarDec  { $$=createTnode(1, "ExtDecList", ""); appendTnode($$, 1, $1); }
+  | VarDec COMMA ExtDecList  { $$=createTnode(1, "ExtDecList", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
 
 /* Specifiers */
-Specifier : TYPE  { $$=creatTnode(1, "Specifier", ""); appendTnode($$, 1, $1); }
-  | StructSpecifier  { $$=creatTnode(1, "Specifier", ""); appendTnode($$, 1, $1); }
+Specifier : TYPE  { $$=createTnode(1, "Specifier", ""); appendTnode($$, 1, $1); }
+  | StructSpecifier  { $$=createTnode(1, "Specifier", ""); appendTnode($$, 1, $1); }
   ;
-StructSpecifier : STRUCT OptTag LC DefList RC  { $$=creatTnode(1, "StructSpecifier", ""); appendTnode($$, 5, $1, $2, $3, $4, $5); }
-  | STRUCT Tag  { $$=creatTnode(1, "StructSpecifier", ""); appendTnode($$, 2, $1, $2); }
+StructSpecifier : STRUCT OptTag LC DefList RC  { $$=createTnode(1, "StructSpecifier", ""); appendTnode($$, 5, $1, $2, $3, $4, $5); }
+  | STRUCT Tag  { $$=createTnode(1, "StructSpecifier", ""); appendTnode($$, 2, $1, $2); }
   ;
-OptTag : ID  { $$=creatTnode(1, "OptTag", ""); appendTnode($$, 1, $1); }
+OptTag : ID  { $$=createTnode(1, "OptTag", ""); appendTnode($$, 1, $1); }
   |  { $$=NULL; }
   ;
-Tag : ID  { $$=creatTnode(1, "Tag", ""); appendTnode($$, 1, $1); }
+Tag : ID  { $$=createTnode(1, "Tag", ""); appendTnode($$, 1, $1); }
   ;
 
 /* Declarators */
-VarDec : ID  { $$=creatTnode(1, "VarDec", ""); appendTnode($$, 1, $1); }
-  | VarDec LB INT RB  { $$=creatTnode(1, "VarDec", ""); appendTnode($$, 4, $1, $2, $3, $4); }
+VarDec : ID  { $$=createTnode(1, "VarDec", ""); appendTnode($$, 1, $1); }
+  | VarDec LB INT RB  { $$=createTnode(1, "VarDec", ""); appendTnode($$, 4, $1, $2, $3, $4); }
   ;
-FunDec : ID LP VarList RP  { $$=creatTnode(1, "FunDec", ""); appendTnode($$, 4, $1, $2, $3, $4); }
-  | ID LP RP  { $$=creatTnode(1, "FunDec", ""); appendTnode($$, 3, $1, $2, $3); }
+FunDec : ID LP VarList RP  { $$=createTnode(1, "FunDec", ""); appendTnode($$, 4, $1, $2, $3, $4); }
+  | ID LP RP  { $$=createTnode(1, "FunDec", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
-VarList : ParamDec COMMA VarList  { $$=creatTnode(1, "VarList", ""); appendTnode($$, 3, $1, $2, $3); }
-  | ParamDec  { $$=creatTnode(1, "VarList", ""); appendTnode($$, 1, $1); }
+VarList : ParamDec COMMA VarList  { $$=createTnode(1, "VarList", ""); appendTnode($$, 3, $1, $2, $3); }
+  | ParamDec  { $$=createTnode(1, "VarList", ""); appendTnode($$, 1, $1); }
   ;
-ParamDec : Specifier VarDec  { $$=creatTnode(1, "ParamDec", ""); appendTnode($$, 2, $1, $2); }
+ParamDec : Specifier VarDec  { $$=createTnode(1, "ParamDec", ""); appendTnode($$, 2, $1, $2); }
   ;
 
 /* Statements */
-CompSt : LC DefList StmtList RC  { $$=creatTnode(1, "CompSt", ""); appendTnode($$, 4, $1, $2, $3, $4); }
+CompSt : LC DefList StmtList RC  { $$=createTnode(1, "CompSt", ""); appendTnode($$, 4, $1, $2, $3, $4); }
   ;
-StmtList : Stmt StmtList  { $$=creatTnode(1, "StmtList", ""); appendTnode($$, 2, $1, $2); }
+StmtList : Stmt StmtList  { $$=createTnode(1, "StmtList", ""); appendTnode($$, 2, $1, $2); }
   |  { $$=NULL; }
   ;
-Stmt : Exp SEMI  { $$=creatTnode(1, "Stmt", ""); appendTnode($$, 2, $1, $2); }
-  | CompSt  { $$=creatTnode(1, "Stmt", ""); appendTnode($$, 1, $1); }
-  | RETURN Exp SEMI  { $$=creatTnode(1, "Stmt", ""); appendTnode($$, 3, $1, $2, $3); }
-  | IF LP Exp RP Stmt  %prec LOWER_THAN_ELSE  { $$=creatTnode(1, "Stmt", ""); appendTnode($$, 5, $1, $2, $3, $4, $5); }
-  | IF LP Exp RP Stmt ELSE Stmt  { $$=creatTnode(1, "Stmt", ""); appendTnode($$, 7, $1, $2, $3, $4, $5, $6, $7); }
-  | WHILE LP Exp RP Stmt  { $$=creatTnode(1, "Stmt", ""); appendTnode($$, 5, $1, $2, $3, $4, $5); }
+Stmt : Exp SEMI  { $$=createTnode(1, "Stmt", ""); appendTnode($$, 2, $1, $2); }
+  | CompSt  { $$=createTnode(1, "Stmt", ""); appendTnode($$, 1, $1); }
+  | RETURN Exp SEMI  { $$=createTnode(1, "Stmt", ""); appendTnode($$, 3, $1, $2, $3); }
+  | IF LP Exp RP Stmt  %prec LOWER_THAN_ELSE  { $$=createTnode(1, "Stmt", ""); appendTnode($$, 5, $1, $2, $3, $4, $5); }
+  | IF LP Exp RP Stmt ELSE Stmt  { $$=createTnode(1, "Stmt", ""); appendTnode($$, 7, $1, $2, $3, $4, $5, $6, $7); }
+  | WHILE LP Exp RP Stmt  { $$=createTnode(1, "Stmt", ""); appendTnode($$, 5, $1, $2, $3, $4, $5); }
   ;
 
 /* Local Definitions */
-DefList : Def DefList  { $$=creatTnode(1, "DefList", ""); appendTnode($$, 2, $1, $2); }
+DefList : Def DefList  { $$=createTnode(1, "DefList", ""); appendTnode($$, 2, $1, $2); }
   |  { $$=NULL; }
   ;
-Def : Specifier DecList SEMI  { $$=creatTnode(1, "Def", ""); appendTnode($$, 3, $1, $2, $3); }
+Def : Specifier DecList SEMI  { $$=createTnode(1, "Def", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
-DecList : Dec  { $$=creatTnode(1, "DecList", ""); appendTnode($$, 1, $1); }
-  | Dec COMMA DecList  { $$=creatTnode(1, "DecList", ""); appendTnode($$, 3, $1, $2, $3); }
+DecList : Dec  { $$=createTnode(1, "DecList", ""); appendTnode($$, 1, $1); }
+  | Dec COMMA DecList  { $$=createTnode(1, "DecList", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
-Dec : VarDec  { $$=creatTnode(1, "Dec", ""); appendTnode($$, 1, $1); }
-  | VarDec ASSIGNOP Exp  { $$=creatTnode(1, "Dec", ""); appendTnode($$, 3, $1, $2, $3); }
+Dec : VarDec  { $$=createTnode(1, "Dec", ""); appendTnode($$, 1, $1); }
+  | VarDec ASSIGNOP Exp  { $$=createTnode(1, "Dec", ""); appendTnode($$, 3, $1, $2, $3); }
   ;
 
 /* Expressions */
-Exp : Exp ASSIGNOP Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp AND Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp OR Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp RELOP Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp PLUS Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp MINUS Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp STAR Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp DIV Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | LP Exp RP  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | MINUS Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 2, $1, $2); }
-  | NOT Exp  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 2, $1, $2); }
-  | ID LP Args RP  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 4, $1, $2, $3, $4); }
-  | ID LP RP  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp LB Exp RB  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 4, $1, $2, $3, $4); }
-  | Exp DOT ID  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
-  | ID  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 1, $1); }
-  | INT  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 1, $1); }
-  | FLOAT  { $$=creatTnode(1, "Exp", ""); appendTnode($$, 1, $1); }
+Exp : Exp ASSIGNOP Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp AND Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp OR Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp RELOP Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp PLUS Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp MINUS Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp STAR Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp DIV Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | LP Exp RP  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | MINUS Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 2, $1, $2); }
+  | NOT Exp  { $$=createTnode(1, "Exp", ""); appendTnode($$, 2, $1, $2); }
+  | ID LP Args RP  { $$=createTnode(1, "Exp", ""); appendTnode($$, 4, $1, $2, $3, $4); }
+  | ID LP RP  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp LB Exp RB  { $$=createTnode(1, "Exp", ""); appendTnode($$, 4, $1, $2, $3, $4); }
+  | Exp DOT ID  { $$=createTnode(1, "Exp", ""); appendTnode($$, 3, $1, $2, $3); }
+  | ID  { $$=createTnode(1, "Exp", ""); appendTnode($$, 1, $1); }
+  | INT  { $$=createTnode(1, "Exp", ""); appendTnode($$, 1, $1); }
+  | FLOAT  { $$=createTnode(1, "Exp", ""); appendTnode($$, 1, $1); }
   ;
-Args : Exp COMMA Args  { $$=creatTnode(1, "Args", ""); appendTnode($$, 3, $1, $2, $3); }
-  | Exp  { $$=creatTnode(1, "Args", ""); appendTnode($$, 1, $1); }
+Args : Exp COMMA Args  { $$=createTnode(1, "Args", ""); appendTnode($$, 3, $1, $2, $3); }
+  | Exp  { $$=createTnode(1, "Args", ""); appendTnode($$, 1, $1); }
   ;
 
 /* Comments */

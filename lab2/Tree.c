@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
 #include "Tree.h"
 
-Tnode *creatTnode(int type, char *name, char *value)
+Tnode *createTnode(int type, char *name, char *value)
 {
     Tnode *p = (Tnode *)malloc(sizeof(Tnode));
     memcpy(p->name, name, sizeof(p->name));

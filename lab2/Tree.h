@@ -1,6 +1,11 @@
 #ifndef __TREE_H
 #define __TREE_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
 extern int yylineno;
 
 // 采用二叉树表示法（孩子兄弟表示法）
@@ -15,7 +20,7 @@ typedef struct Tnode
 } Tnode;
 
 // 创建节点
-Tnode *creatTnode(int type, char *name, char *value);
+Tnode *createTnode(int type, char *name, char *value);
 
 // 添加节点（num为添加的节点个数）
 void appendTnode(Tnode *parent, int num, ...);
