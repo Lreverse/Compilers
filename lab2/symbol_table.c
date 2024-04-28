@@ -24,9 +24,15 @@ void initHashT(symbol_Table Table)
     }
 }
 
-/* 检查变量名是否重复定义 */
-/* flag用来判断是变量还是函数 */
-int check_redefine(symbol_Table Table, char *name, enum VarDec_flag flag)
+/*
+ *  flag：表示参数name是变量名还是函数名
+ * 
+ *  该函数既可以用来检查是否重复定义，又可以检查使用之前是否已经定义
+ *  1. 重复定义：返回0代表该符号重复定义
+ *  2. 使用定义：返回0代表该符号已经定义
+ *  ！判断错误时要注意返回值
+ */
+int check(symbol_Table Table, char *name, enum VarDec_flag flag)
 {
     unsigned int val = hash_pjw(name);
     HashNode p = Table->HashT[val];
@@ -80,7 +86,7 @@ void printHashT(symbol_Table Table)
 {
     HashNode p = NULL;
     int j = 1;
-    printf("symbol table:\n");
+    printf("\nsymbol table:\n");
     for(int i = 0; i < Table_Size; i++)
     {
         p = Table->HashT[i];

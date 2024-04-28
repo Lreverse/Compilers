@@ -1,5 +1,5 @@
-int a, b, c[2][3];
-int test(int d, float y[10][3])
+int main()
 {
-    int e, j;
+    int i;
+    i = 3.7;
 }

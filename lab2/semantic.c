@@ -8,7 +8,7 @@ void Program(Tnode *node)
 
 void ExtDefList(Tnode *node)
 {
-    if (!node)    // 空产生式
+    if (node == NULL)    // 空产生式
         return;
     ExtDef(node->lchild);
     ExtDefList(node->lchild->rsibling);
@@ -59,11 +59,13 @@ Type Specifier(Tnode *node)
 void ExtDecList(Tnode *node, Type type)
 {
     VarDec(node->lchild, type, VARIABLE);
+    printf("ExtDecList\n");
     if (node->lchild->rsibling)
     {
         // 对于int a, b, c;的情况，进行递归调用
         ExtDecList(node->lchild->rsibling->rsibling, type);
     }
+    printf("ExtDecList\n");
 }
 
 enum BASIC_TYPE TYPE(Tnode *node)
@@ -87,14 +89,14 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
     {
         if (flag == VARIABLE)
         {
-            if(check_redefine(SymbolTable, node->lchild->value, VARIABLE))
+            if(!check(SymbolTable, node->lchild->value, VARIABLE))
             {
-                HashNode Hnode = createHnode(node->lchild->value, type);
-                insertHnode(SymbolTable, Hnode);
+                printf("Error type 3 at Line %d: Redefined variable \"%s\"\n", node->lineno, node->lchild->value);
             }
             else
             {
-                printf("Error type 3 at Line %d: Redefined variable \"%s\"\n", node->lineno, node->lchild->value);
+                HashNode Hnode = createHnode(node->lchild->value, type);
+                insertHnode(SymbolTable, Hnode);
             }
             return NULL;
         }
@@ -120,7 +122,7 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
 
 void DefList(Tnode *node)
 {
-    if (!node)   // 空产生式
+    if (node == NULL)   // 空产生式
         return;
     Def(node->lchild);
     DefList(node->lchild->rsibling);
@@ -160,16 +162,15 @@ void FunDec(Tnode *node, Type rtnType)
     {
         VarList(node->lchild->rsibling->rsibling, type);
     }
-    if (check_redefine(SymbolTable, node->lchild->value, PARAMETER))
+    if (!check(SymbolTable, node->lchild->value, PARAMETER))
+    {
+        printf("Error type 4 at Line %d: Redefined function \"%s\"\n", node->lineno, node->lchild->value);
+    }
+    else
     {
         HashNode Hnode = createHnode(node->lchild->value, type);
         insertHnode(SymbolTable, Hnode);
     }
-    else
-    {
-        printf("Error type 4 at Line %d: Redefined function \"%s\"\n", node->lineno, node->lchild->value);
-    }
-    
 }
 
 void VarList(Tnode *node, Type type)
@@ -202,11 +203,88 @@ void ParamDec(Tnode *node, Type type)
 
 void CompSt(Tnode *node)
 {
-    DefList(node->lchild->rsibling);
-    StmtList(node->lchild->rsibling->rsibling);
+    if (!strcmp(node->lchild->rsibling->name, "RC"))
+        return;
+    if (!strcmp(node->lchild->rsibling->name, "DefList"))
+        DefList(node->lchild->rsibling);
+    if (!strcmp(node->lchild->rsibling->rsibling->name, "StmtList"))  
+        StmtList(node->lchild->rsibling->rsibling);
+    // 因为DefList和StmtList都可以为空产生式，所以如果这里不进行比较，会导致传入错误结点，导致后续分析出错，出现段错误
 }
 
 void StmtList(Tnode *node)
 {
+    if (node == NULL)  // 空产生式
+        return;
+    Stmt(node->lchild);
+    StmtList(node->lchild->rsibling);
+}
 
+void Stmt(Tnode *node)
+{
+    if (!strcmp(node->lchild->name, "Exp"))
+    {
+        Exp(node->lchild);
+    }
+    else if (!strcmp(node->lchild->name, "CompSt"))
+    {
+        CompSt(node->lchild);
+    }
+    else if (!strcmp(node->lchild->name, "RETURN"))
+    {
+        printf("in return\n");
+        Exp(node->lchild->rsibling);
+        printf("out return\n");
+    }
+    else if (!strcmp(node->lchild->name, "IF"))
+    {
+
+    }
+    else if(!strcmp(node->lchild->name, "WHILE"))
+    {
+
+    }
+    
+}
+
+Type Exp(Tnode *node)
+{
+    if (!strcmp(node->lchild->name, "Exp"))
+    {
+        Exp(node->lchild);
+    }
+    else if (!strcmp(node->lchild->name, "ID"))
+    {
+        if (node->lchild->rsibling == NULL)   // 说明这是一个变量名
+        {
+            if(check(SymbolTable, node->lchild->value, VARIABLE))
+            {
+                printf("Error type 1 at Line %d: Undefined variable \"%s\"\n", node->lineno, node->lchild->value);
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        else   // 说明这是个函数名
+        {
+            if(check(SymbolTable, node->lchild->value, PARAMETER))
+            {
+                printf("Error type 2 at Line %d: Undefined function \"%s\"\n", node->lineno, node->lchild->value);
+            }
+            else
+            {
+                // 对函数参数暂时不做处理，回头再来
+                return NULL;
+            }
+        }
+    }
+    else if (!strcmp(node->lchild->name, "INT"))
+    {
+        return NULL;
+    }
+    else if (!strcmp(node->lchild->name, "FLOAT"))
+    {
+        return NULL;
+    }
 }

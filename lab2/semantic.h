@@ -25,5 +25,7 @@ void VarList(Tnode *node, Type type);
 void ParamDec(Tnode *node, Type type);
 void CompSt(Tnode *node);
 void StmtList(Tnode *node);
+void Stmt(Tnode *node);
+Type Exp(Tnode *node);
 
 #endif
