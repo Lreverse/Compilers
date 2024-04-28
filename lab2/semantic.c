@@ -59,13 +59,11 @@ Type Specifier(Tnode *node)
 void ExtDecList(Tnode *node, Type type)
 {
     VarDec(node->lchild, type, VARIABLE);
-    printf("ExtDecList\n");
     if (node->lchild->rsibling)
     {
         // 对于int a, b, c;的情况，进行递归调用
         ExtDecList(node->lchild->rsibling->rsibling, type);
     }
-    printf("ExtDecList\n");
 }
 
 enum BASIC_TYPE TYPE(Tnode *node)
@@ -89,7 +87,7 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
     {
         if (flag == VARIABLE)
         {
-            if(!check(SymbolTable, node->lchild->value, VARIABLE))
+            if(check(SymbolTable, node->lchild->value, VARIABLE))
             {
                 printf("Error type 3 at Line %d: Redefined variable \"%s\"\n", node->lineno, node->lchild->value);
             }
@@ -162,7 +160,7 @@ void FunDec(Tnode *node, Type rtnType)
     {
         VarList(node->lchild->rsibling->rsibling, type);
     }
-    if (!check(SymbolTable, node->lchild->value, PARAMETER))
+    if (check(SymbolTable, node->lchild->value, PARAMETER))
     {
         printf("Error type 4 at Line %d: Redefined function \"%s\"\n", node->lineno, node->lchild->value);
     }
@@ -247,44 +245,122 @@ void Stmt(Tnode *node)
     
 }
 
+/* 处理表达式 */
 Type Exp(Tnode *node)
 {
     if (!strcmp(node->lchild->name, "Exp"))
     {
-        Exp(node->lchild);
+        Type type1, type2;
+        type1 = Exp(node->lchild);
+        type2 = Exp(node->lchild->rsibling->rsibling);
+        if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
+        {
+            /* Error type6 */
+            if (!strcmp(node->lchild->lchild->name, "ID") && node->lchild->lchild->rsibling == NULL) {}
+            else if (!strcmp(node->lchild->lchild->name, "Exp") && !strcmp(node->lchild->lchild->rsibling->name, "LB")) {}
+            else if (!strcmp(node->lchild->lchild->name, "Exp") && !strcmp(node->lchild->lchild->rsibling->name, "DOT")) {}
+            else
+            {
+                printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable\n", node->lineno);
+                return NULL;
+            }
+
+            /* Error type 5*/
+            if (type1->kind != type2->kind)  // 基本类型不一致
+                printf("Error type 5 at Line %d: Type mismatched for assignment\n", node->lineno);
+            else if (type1->kind == BASIC)   // 如果两个都是BASIC类型
+                if (type1->u.basic != type2->u.basic)
+                    printf("Error type 5 at Line %d: Type mismatched for assignment\n", node->lineno);
+            else if (type1->kind == ARRAY)    // 如果两个都是ARRAY类型
+            {
+                type1 = get_array_type(type1);
+                type2 = get_array_type(type2);
+                if (type1->kind != type2->kind)
+                    printf("Error type 5 at Line %d: Type mismatched for assignment\n", node->lineno);
+                else if (type1->kind == BASIC)
+                    if (type1->u.basic != type2->u.basic)
+                        printf("Error type 5 at Line %d: Type mismatched for assignment\n", node->lineno);
+                else if (type1->kind == STRUCTURE)
+                {
+                    // 如果是结构体数组，暂时不做处理
+                }
+            }
+            return NULL;
+        }
+        else
+        {
+            if (type1->kind != type2->kind)  // 基本类型不一致
+                printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+            else if (type1->kind == BASIC)   // 如果两个都是BASIC类型
+                if (type1->u.basic != type2->u.basic)
+                    printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+            else if (type1->kind == ARRAY)    // 如果两个都是ARRAY类型
+            {
+                type1 = get_array_type(type1);
+                type2 = get_array_type(type2);
+                if (type1->kind != type2->kind)
+                    printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                else if (type1->kind == BASIC)
+                    if (type1->u.basic != type2->u.basic)
+                        printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                else if (type1->kind == STRUCTURE)
+                {
+                    // 如果是结构体数组，暂时不做处理
+                }
+            }
+        }
     }
     else if (!strcmp(node->lchild->name, "ID"))
     {
         if (node->lchild->rsibling == NULL)   // 说明这是一个变量名
         {
-            if(check(SymbolTable, node->lchild->value, VARIABLE))
+            Type type = check(SymbolTable, node->lchild->value, VARIABLE);
+            if(!type)
             {
                 printf("Error type 1 at Line %d: Undefined variable \"%s\"\n", node->lineno, node->lchild->value);
             }
             else
             {
-                return NULL;
+                return type;
             }
         }
         else   // 说明这是个函数名
         {
-            if(check(SymbolTable, node->lchild->value, PARAMETER))
+            Type type = check(SymbolTable, node->lchild->value, PARAMETER);
+            if(!type)
             {
                 printf("Error type 2 at Line %d: Undefined function \"%s\"\n", node->lineno, node->lchild->value);
             }
             else
             {
                 // 对函数参数暂时不做处理，回头再来
-                return NULL;
+                return type;
             }
         }
     }
     else if (!strcmp(node->lchild->name, "INT"))
     {
-        return NULL;
+        Type type = (Type)malloc(sizeof(Type_));
+        type->kind = BASIC;
+        type->u.basic = BASIC_INT;
+        return type;
     }
     else if (!strcmp(node->lchild->name, "FLOAT"))
     {
-        return NULL;
+        Type type = (Type)malloc(sizeof(Type_));
+        type->kind = BASIC;
+        type->u.basic = BASIC_FLOAT;
+        return type;
     }
+}
+
+/* 获取数组的基本类型 */
+Type get_array_type(Type type)
+{
+    Type elem = type->u.array.elem;
+    while(elem && elem->kind == ARRAY)
+    {
+        elem = elem->u.array.elem;
+    }
+    return elem;
 }

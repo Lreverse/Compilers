@@ -28,4 +28,7 @@ void StmtList(Tnode *node);
 void Stmt(Tnode *node);
 Type Exp(Tnode *node);
 
+
+Type get_array_type(Type type);
+
 #endif

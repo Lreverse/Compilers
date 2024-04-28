@@ -28,11 +28,11 @@ void initHashT(symbol_Table Table)
  *  flag：表示参数name是变量名还是函数名
  * 
  *  该函数既可以用来检查是否重复定义，又可以检查使用之前是否已经定义
- *  1. 重复定义：返回0代表该符号重复定义
- *  2. 使用定义：返回0代表该符号已经定义
+ *  1. 重复定义：返回非空代表该符号重复定义
+ *  2. 使用定义：返回非空代表该符号已经定义，返回值为对应ID的类型
  *  ！判断错误时要注意返回值
  */
-int check(symbol_Table Table, char *name, enum VarDec_flag flag)
+Type check(symbol_Table Table, char *name, enum VarDec_flag flag)
 {
     unsigned int val = hash_pjw(name);
     HashNode p = Table->HashT[val];
@@ -42,19 +42,19 @@ int check(symbol_Table Table, char *name, enum VarDec_flag flag)
         {
             if(!strcmp(p->name, name) && p->type->kind != FUNCTION)
             {
-                return 0;
+                return p->type;
             }
         }
         else if (flag == PARAMETER)
         {
             if(!strcmp(p->name, name) && p->type->kind == FUNCTION)
             {
-                return 0;
+                return p->type;
             }
         }
         p = p->next;
     }
-    return 1;
+    return NULL;
 }
 
 /* 创建结点 */
@@ -93,17 +93,17 @@ void printHashT(symbol_Table Table)
         while(p)
         {
             int kind = p->type->kind;
-            printf("%d:  %s  kind(%d)  ", j, p->name, kind);
+            printf("%d:  %-8s  kind = %d    ", j, p->name, kind);
 
             // 类型0：basic
             if (kind == 0)
-                printf("basic=%d\n", p->type->u.basic);
+                printf("basic = %d\n", p->type->u.basic);
             // 类型1：array
             else if (kind == 1)
             {
                 Type elem = p->type->u.array.elem;
-                printf("array=[%d]", p->type->u.array.size);
-                while (elem && elem->kind == 1)
+                printf("array = %s[%d]", p->name, p->type->u.array.size);
+                while (elem && elem->kind == ARRAY)
                 {
                     printf("[%d]", elem->u.array.size);
                     elem = elem->u.array.elem;

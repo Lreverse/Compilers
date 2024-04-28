@@ -1,0 +1,7 @@
+int a, b, c;
+float d[10][34];
+
+int func(int g, int h[1][2])
+{
+    return 1;
+}
