@@ -255,6 +255,12 @@ Type Exp(Tnode *node)
         type2 = Exp(node->lchild->rsibling->rsibling);
         if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
         {
+            /* 下层type不合法 */
+            if (type1 == NULL)
+                return NULL;
+            if (type2 == NULL)
+                return NULL;
+            
             /* Error type6 */
             if (!strcmp(node->lchild->lchild->name, "ID") && node->lchild->lchild->rsibling == NULL) {}
             else if (!strcmp(node->lchild->lchild->name, "Exp") && !strcmp(node->lchild->lchild->rsibling->name, "LB")) {}
@@ -287,27 +293,63 @@ Type Exp(Tnode *node)
             }
             return NULL;
         }
-        else
+        else if (!strcmp(node->lchild->rsibling->name, "LB"))  // 访问数组
+        {
+            Type type = Exp(node->lchild->rsibling->rsibling);
+            if (type->kind != BASIC)
+            {
+                printf("Error type 12 at Line %d: \"%s\" is not an integer\n", node->lineno, node->lchild->rsibling->rsibling->lchild->value);
+                return NULL;
+            }
+            else if (type->u.basic != BASIC_INT)
+            {
+                printf("Error type 12 at Line %d: \"%s\" is not an integer\n", node->lineno, node->lchild->rsibling->rsibling->lchild->value);
+                return NULL;
+            }
+            return Exp(node->lchild);
+        }
+        else if (!strcmp(node->lchild->rsibling->name, "DOT"))  // 访问结构体
+        {
+
+        }
+        else  // 处理操作符
         {
             if (type1->kind != type2->kind)  // 基本类型不一致
+            {
                 printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                return NULL;
+            }
             else if (type1->kind == BASIC)   // 如果两个都是BASIC类型
+            {
                 if (type1->u.basic != type2->u.basic)
+                {
                     printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                    return NULL;
+                }
+            }
             else if (type1->kind == ARRAY)    // 如果两个都是ARRAY类型
             {
                 type1 = get_array_type(type1);
                 type2 = get_array_type(type2);
                 if (type1->kind != type2->kind)
+                {
                     printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                    return NULL;
+                }
                 else if (type1->kind == BASIC)
+                {
                     if (type1->u.basic != type2->u.basic)
+                    {
                         printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                        return NULL;
+                    }
+                }
                 else if (type1->kind == STRUCTURE)
                 {
                     // 如果是结构体数组，暂时不做处理
                 }
             }
+            return type1;
         }
     }
     else if (!strcmp(node->lchild->name, "ID"))

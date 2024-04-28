@@ -1,7 +1,8 @@
 int a, b, c;
-float d[10][34];
+float d[10];
 
 int func(int g, int h[1][2])
 {
+    a = d[b + c]
     return 1;
 }
