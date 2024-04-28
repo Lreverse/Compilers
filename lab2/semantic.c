@@ -295,7 +295,16 @@ Type Exp(Tnode *node)
         }
         else if (!strcmp(node->lchild->rsibling->name, "LB"))  // 访问数组
         {
+            /* Error type 10 */
+            Type type_name = Exp(node->lchild);
+            if (type_name->kind != ARRAY)
+            {
+                printf("Error type 10 at Line %d: \"%s\" is not an array\n", node->lineno, node->lchild->lchild->value);
+                return NULL;
+            }
+
             Type type = Exp(node->lchild->rsibling->rsibling);
+            /* Error type 12 */
             if (type->kind != BASIC)
             {
                 printf("Error type 12 at Line %d: \"%s\" is not an integer\n", node->lineno, node->lchild->rsibling->rsibling->lchild->value);
@@ -306,7 +315,7 @@ Type Exp(Tnode *node)
                 printf("Error type 12 at Line %d: \"%s\" is not an integer\n", node->lineno, node->lchild->rsibling->rsibling->lchild->value);
                 return NULL;
             }
-            return Exp(node->lchild);
+            return type_name;
         }
         else if (!strcmp(node->lchild->rsibling->name, "DOT"))  // 访问结构体
         {
