@@ -3,15 +3,15 @@
 
 void Program(Tnode *node)
 {
-    ExcDefList(node->lchild);
+    ExtDefList(node->lchild);
 }
 
-void ExcDefList(Tnode *node)
+void ExtDefList(Tnode *node)
 {
     if (!node)    // 空产生式
         return;
     ExtDef(node->lchild);
-    ExcDefList(node->lchild->rsibling);
+    ExtDefList(node->lchild->rsibling);
 }
 
 /* 全局定义 */
@@ -31,6 +31,7 @@ void ExtDef(Tnode *node)
     else if(!strcmp(Node_name, "FunDec"))
     {
         FunDec(node->lchild->rsibling, type);
+        CompSt(node->lchild->rsibling->rsibling);
     }
 }
 
@@ -86,8 +87,15 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
     {
         if (flag == VARIABLE)
         {
-            HashNode Hnode = createHnode(node->lchild->value, type);
-            insertHnode(SymbolTable, Hnode);
+            if(check_redefine(SymbolTable, node->lchild->value, VARIABLE))
+            {
+                HashNode Hnode = createHnode(node->lchild->value, type);
+                insertHnode(SymbolTable, Hnode);
+            }
+            else
+            {
+                printf("Error type 3 at Line %d: Redefined variable \"%s\"\n", node->lineno, node->lchild->value);
+            }
             return NULL;
         }
         else if (flag == PARAMETER)
@@ -137,9 +145,10 @@ void DecList(Tnode *node, Type type)
 void Dec(Tnode *node, Type type)
 {
     VarDec(node->lchild, type, VARIABLE);
+    // 这里还有赋值的情况
 }
 
-/* 函数定义 */
+/* 函数定义(在此处插入结点) */
 void FunDec(Tnode *node, Type rtnType)
 {
     Type type = (Type)malloc(sizeof(Type_));
@@ -147,12 +156,20 @@ void FunDec(Tnode *node, Type rtnType)
     type->u.function.rtnType = rtnType;
     type->u.function.argc = 0;
     type->u.function.argv = NULL;
-    if(!strcmp(node->lchild->rsibling->rsibling->name, "VarList"))
+    if (!strcmp(node->lchild->rsibling->rsibling->name, "VarList"))
     {
         VarList(node->lchild->rsibling->rsibling, type);
     }
-    HashNode Hnode = createHnode(node->lchild->value, type);
-    insertHnode(SymbolTable, Hnode);
+    if (check_redefine(SymbolTable, node->lchild->value, PARAMETER))
+    {
+        HashNode Hnode = createHnode(node->lchild->value, type);
+        insertHnode(SymbolTable, Hnode);
+    }
+    else
+    {
+        printf("Error type 4 at Line %d: Redefined function \"%s\"\n", node->lineno, node->lchild->value);
+    }
+    
 }
 
 void VarList(Tnode *node, Type type)
@@ -181,4 +198,15 @@ void ParamDec(Tnode *node, Type type)
         p->tail = argv;
     }
     type->u.function.argc++;
+}
+
+void CompSt(Tnode *node)
+{
+    DefList(node->lchild->rsibling);
+    StmtList(node->lchild->rsibling->rsibling);
+}
+
+void StmtList(Tnode *node)
+{
+
 }

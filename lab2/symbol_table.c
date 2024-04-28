@@ -2,6 +2,7 @@
 
 symbol_Table SymbolTable = NULL;
 
+/* 哈希函数 */
 unsigned int hash_pjw(char *name)
 {
     unsigned int val = 0, i;
@@ -14,6 +15,7 @@ unsigned int hash_pjw(char *name)
     return val;
 }
 
+/* 初始化哈希表 */
 void initHashT(symbol_Table Table)
 {
     for(int i = 0; i < Table_Size; i++)
@@ -22,6 +24,34 @@ void initHashT(symbol_Table Table)
     }
 }
 
+/* 检查变量名是否重复定义 */
+/* flag用来判断是变量还是函数 */
+int check_redefine(symbol_Table Table, char *name, enum VarDec_flag flag)
+{
+    unsigned int val = hash_pjw(name);
+    HashNode p = Table->HashT[val];
+    while(p)
+    {
+        if(flag == VARIABLE)
+        {
+            if(!strcmp(p->name, name) && p->type->kind != FUNCTION)
+            {
+                return 0;
+            }
+        }
+        else if (flag == PARAMETER)
+        {
+            if(!strcmp(p->name, name) && p->type->kind == FUNCTION)
+            {
+                return 0;
+            }
+        }
+        p = p->next;
+    }
+    return 1;
+}
+
+/* 创建结点 */
 HashNode createHnode(char *name, Type type)
 {
     HashNode p = (HashNode)malloc(sizeof(HashNode_));
@@ -36,6 +66,7 @@ HashNode createHnode(char *name, Type type)
     return p;
 }
 
+/* 插入结点 */
 void insertHnode(symbol_Table Table, HashNode node)
 {
     unsigned int val = hash_pjw(node->name);
@@ -44,10 +75,12 @@ void insertHnode(symbol_Table Table, HashNode node)
     Table->HashT[val] = node;
 }
 
+/* 打印符号表 */
 void printHashT(symbol_Table Table)
 {
     HashNode p = NULL;
     int j = 1;
+    printf("symbol table:\n");
     for(int i = 0; i < Table_Size; i++)
     {
         p = Table->HashT[i];

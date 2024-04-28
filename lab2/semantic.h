@@ -7,10 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum VarDec_flag { VARIABLE, PARAMETER };
 
 void Program(Tnode *node);
-void ExcDefList(Tnode *node);
+void ExtDefList(Tnode *node);
 void ExtDef(Tnode *node);
 Type Specifier(Tnode *node);
 void ExtDecList(Tnode *node, Type type);
@@ -24,6 +23,7 @@ void Dec(Tnode *node, Type type);
 void FunDec(Tnode *node, Type rtnType);
 void VarList(Tnode *node, Type type);
 void ParamDec(Tnode *node, Type type);
-
+void CompSt(Tnode *node);
+void StmtList(Tnode *node);
 
 #endif

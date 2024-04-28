@@ -7,6 +7,7 @@
 
 #define Table_Size 0x3fff
 enum BASIC_TYPE { BASIC_INT, BASIC_FLOAT };
+enum VarDec_flag { VARIABLE, PARAMETER };
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct HashNode_* HashNode;
@@ -51,6 +52,7 @@ typedef struct symbol_Table_
 /* 哈希相关函数 */
 unsigned int hash_pjw(char *name);
 void initHashT(symbol_Table Table);
+int check_redefine(symbol_Table Table, char *name, enum VarDec_flag flag);
 HashNode createHnode(char *name, Type type);
 void insertHnode(symbol_Table Table, HashNode node);
 void printHashT(symbol_Table Table);
