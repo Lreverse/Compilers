@@ -100,6 +100,17 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
         }
         else if (flag == PARAMETER)
         {
+            // 将函数的形参也添加到符号表中
+            if(check(SymbolTable, node->lchild->value, VARIABLE))
+            {
+                printf("Error type 3 at Line %d: Redefined variable \"%s\"\n", node->lineno, node->lchild->value);
+            }
+            else
+            {
+                HashNode Hnode = createHnode(node->lchild->value, type);
+                insertHnode(SymbolTable, Hnode);
+            }
+            // 生成FieldList链接到函数结点
             FieldList argv = (FieldList)malloc(sizeof(FieldList_));
             argv->name = node->lchild->value;
             argv->type = type;
@@ -145,7 +156,33 @@ void DecList(Tnode *node, Type type)
 void Dec(Tnode *node, Type type)
 {
     VarDec(node->lchild, type, VARIABLE);
-    // 这里还有赋值的情况
+
+    if (node->lchild->rsibling)
+    {
+        // 定义时赋值
+        if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
+        {
+            printf("here\n");
+            Type type_cmp = Exp(node->lchild->rsibling->rsibling);
+            if (type->kind != type_cmp->kind)
+            {
+                printf("Error type 5 at Line %d: Type mismatched for assignment\n", node->lineno);
+            }
+            else
+            {
+                if (type->kind == BASIC)
+                {
+                    if (type->u.basic != type_cmp->u.basic)
+                        printf("Error type 5 at Line %d: Type mismatched for assignment\n", node->lineno);
+                }
+                // else if(type->kind == ARRAY)
+                // {
+                //     Type type1 = get_array_type(type);
+                //     Type type2 = get_array_type(type_cmp);
+                // }
+            }
+        }
+    }
 }
 
 /* 函数定义(在此处插入结点) */
@@ -203,10 +240,16 @@ void CompSt(Tnode *node)
 {
     if (!strcmp(node->lchild->rsibling->name, "RC"))
         return;
-    if (!strcmp(node->lchild->rsibling->name, "DefList"))
-        DefList(node->lchild->rsibling);
-    if (!strcmp(node->lchild->rsibling->rsibling->name, "StmtList"))  
-        StmtList(node->lchild->rsibling->rsibling);
+    if (!strcmp(node->lchild->rsibling->rsibling->name, "RC"))
+    {
+        if (!strcmp(node->lchild->rsibling->name, "DefList"))
+            DefList(node->lchild->rsibling);
+        else if (!strcmp(node->lchild->rsibling->name, "StmtList"))
+            StmtList(node->lchild->rsibling);
+        return;
+    }
+    DefList(node->lchild->rsibling);
+    StmtList(node->lchild->rsibling->rsibling);
     // 因为DefList和StmtList都可以为空产生式，所以如果这里不进行比较，会导致传入错误结点，导致后续分析出错，出现段错误
 }
 
@@ -230,19 +273,22 @@ void Stmt(Tnode *node)
     }
     else if (!strcmp(node->lchild->name, "RETURN"))
     {
-        printf("in return\n");
         Exp(node->lchild->rsibling);
-        printf("out return\n");
     }
     else if (!strcmp(node->lchild->name, "IF"))
     {
-
+        Exp(node->lchild->rsibling->rsibling);
+        Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling);
+        if (!strcmp(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->name, "ELSE"))
+        {
+            Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->rsibling);
+        }
     }
     else if(!strcmp(node->lchild->name, "WHILE"))
     {
-
+        Exp(node->lchild->rsibling->rsibling);
+        Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling);
     }
-    
 }
 
 /* 处理表达式 */
@@ -295,27 +341,29 @@ Type Exp(Tnode *node)
         }
         else if (!strcmp(node->lchild->rsibling->name, "LB"))  // 访问数组
         {
-            /* Error type 10 */
-            Type type_name = Exp(node->lchild);
-            if (type_name->kind != ARRAY)
+            if (!strcmp(node->lchild->lchild->name, "ID"))
             {
-                printf("Error type 10 at Line %d: \"%s\" is not an array\n", node->lineno, node->lchild->lchild->value);
-                return NULL;
+                /* Error type 10 */
+                if (type1->kind != ARRAY)
+                {
+                    printf("Error type 10 at Line %d: \"%s\" is not an array\n", node->lineno, node->lchild->lchild->value);
+                    return NULL;
+                }
+                type1 = get_array_type(type1);
             }
 
-            Type type = Exp(node->lchild->rsibling->rsibling);
             /* Error type 12 */
-            if (type->kind != BASIC)
+            if (type2->kind != BASIC)
             {
                 printf("Error type 12 at Line %d: \"%s\" is not an integer\n", node->lineno, node->lchild->rsibling->rsibling->lchild->value);
                 return NULL;
             }
-            else if (type->u.basic != BASIC_INT)
+            else if (type2->u.basic != BASIC_INT)
             {
                 printf("Error type 12 at Line %d: \"%s\" is not an integer\n", node->lineno, node->lchild->rsibling->rsibling->lchild->value);
                 return NULL;
             }
-            return type_name;
+            return type1;
         }
         else if (!strcmp(node->lchild->rsibling->name, "DOT"))  // 访问结构体
         {
@@ -336,27 +384,10 @@ Type Exp(Tnode *node)
                     return NULL;
                 }
             }
-            else if (type1->kind == ARRAY)    // 如果两个都是ARRAY类型
+            else if (type1->kind == ARRAY)    // 如果两个都是ARRAY类型，直接报错
             {
-                type1 = get_array_type(type1);
-                type2 = get_array_type(type2);
-                if (type1->kind != type2->kind)
-                {
-                    printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
-                    return NULL;
-                }
-                else if (type1->kind == BASIC)
-                {
-                    if (type1->u.basic != type2->u.basic)
-                    {
-                        printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
-                        return NULL;
-                    }
-                }
-                else if (type1->kind == STRUCTURE)
-                {
-                    // 如果是结构体数组，暂时不做处理
-                }
+                printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
+                return NULL;
             }
             return type1;
         }
@@ -369,6 +400,7 @@ Type Exp(Tnode *node)
             if(!type)
             {
                 printf("Error type 1 at Line %d: Undefined variable \"%s\"\n", node->lineno, node->lchild->value);
+                return NULL;
             }
             else
             {
@@ -385,7 +417,7 @@ Type Exp(Tnode *node)
             else
             {
                 // 对函数参数暂时不做处理，回头再来
-                return type;
+                return get_function_rtnType(type);
             }
         }
     }
@@ -414,4 +446,10 @@ Type get_array_type(Type type)
         elem = elem->u.array.elem;
     }
     return elem;
+}
+
+/* 获取函数的返回类型*/
+Type get_function_rtnType(Type type)
+{
+    return type->u.function.rtnType;
 }

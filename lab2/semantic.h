@@ -30,5 +30,6 @@ Type Exp(Tnode *node);
 
 
 Type get_array_type(Type type);
+Type get_function_rtnType(Type type);
 
 #endif
