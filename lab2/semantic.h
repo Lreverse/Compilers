@@ -23,13 +23,14 @@ void Dec(Tnode *node, Type type);
 void FunDec(Tnode *node, Type rtnType);
 void VarList(Tnode *node, Type type);
 void ParamDec(Tnode *node, Type type);
-void CompSt(Tnode *node);
-void StmtList(Tnode *node);
-void Stmt(Tnode *node);
+void CompSt(Tnode *node, Type rtn_type);
+void StmtList(Tnode *node, Type rtn_type);
+void Stmt(Tnode *node, Type rtn_type);
 Type Exp(Tnode *node);
 
 
 Type get_array_type(Type type);
 Type get_function_rtnType(Type type);
+int type_cmp(Type type1, Type type2);
 
 #endif

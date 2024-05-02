@@ -31,7 +31,7 @@ void ExtDef(Tnode *node)
     else if(!strcmp(Node_name, "FunDec"))
     {
         FunDec(node->lchild->rsibling, type);
-        CompSt(node->lchild->rsibling->rsibling);
+        CompSt(node->lchild->rsibling->rsibling, type);
     }
 }
 
@@ -162,7 +162,6 @@ void Dec(Tnode *node, Type type)
         // 定义时赋值
         if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
         {
-            printf("here\n");
             Type type_cmp = Exp(node->lchild->rsibling->rsibling);
             if (type->kind != type_cmp->kind)
             {
@@ -236,7 +235,7 @@ void ParamDec(Tnode *node, Type type)
     type->u.function.argc++;
 }
 
-void CompSt(Tnode *node)
+void CompSt(Tnode *node, Type rtn_type)
 {
     if (!strcmp(node->lchild->rsibling->name, "RC"))
         return;
@@ -245,23 +244,23 @@ void CompSt(Tnode *node)
         if (!strcmp(node->lchild->rsibling->name, "DefList"))
             DefList(node->lchild->rsibling);
         else if (!strcmp(node->lchild->rsibling->name, "StmtList"))
-            StmtList(node->lchild->rsibling);
+            StmtList(node->lchild->rsibling, rtn_type);
         return;
     }
     DefList(node->lchild->rsibling);
-    StmtList(node->lchild->rsibling->rsibling);
+    StmtList(node->lchild->rsibling->rsibling, rtn_type);
     // 因为DefList和StmtList都可以为空产生式，所以如果这里不进行比较，会导致传入错误结点，导致后续分析出错，出现段错误
 }
 
-void StmtList(Tnode *node)
+void StmtList(Tnode *node, Type rtn_type)
 {
     if (node == NULL)  // 空产生式
         return;
-    Stmt(node->lchild);
-    StmtList(node->lchild->rsibling);
+    Stmt(node->lchild, rtn_type);
+    StmtList(node->lchild->rsibling, rtn_type);
 }
 
-void Stmt(Tnode *node)
+void Stmt(Tnode *node, Type rtn_type)
 {
     if (!strcmp(node->lchild->name, "Exp"))
     {
@@ -269,25 +268,31 @@ void Stmt(Tnode *node)
     }
     else if (!strcmp(node->lchild->name, "CompSt"))
     {
-        CompSt(node->lchild);
+        CompSt(node->lchild, rtn_type);
     }
     else if (!strcmp(node->lchild->name, "RETURN"))
     {
-        Exp(node->lchild->rsibling);
+        // 需要判断返回类型
+        Type type = Exp(node->lchild->rsibling);
+        /* Error type 8 */
+        if(type_cmp(type, rtn_type))
+        {
+            printf("Error type 8 at Line %d: Type mismatched for return\n", node->lineno);
+        }
     }
     else if (!strcmp(node->lchild->name, "IF"))
     {
         Exp(node->lchild->rsibling->rsibling);
-        Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling);
+        Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling, rtn_type);
         if (!strcmp(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->name, "ELSE"))
         {
-            Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->rsibling);
+            Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->rsibling, rtn_type);
         }
     }
     else if(!strcmp(node->lchild->name, "WHILE"))
     {
         Exp(node->lchild->rsibling->rsibling);
-        Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling);
+        Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling, rtn_type);
     }
 }
 
@@ -435,6 +440,12 @@ Type Exp(Tnode *node)
         type->u.basic = BASIC_FLOAT;
         return type;
     }
+    else if (!strcmp(node->lchild->name, "MINUS"))
+    {
+        Type type = NULL;
+        type = Exp(node->lchild->rsibling);
+        return type;
+    }
 }
 
 /* 获取数组的基本类型 */
@@ -452,4 +463,24 @@ Type get_array_type(Type type)
 Type get_function_rtnType(Type type)
 {
     return type->u.function.rtnType;
+}
+
+/*
+ *  判断两个type是否一致
+ *  
+ *  返回值：0代表一致；1代表不一致
+ * 
+ */
+int type_cmp(Type type1, Type type2)
+{
+    if (type1->kind != type2->kind)  // 基本类型不一致
+    {
+        return 1;
+    }
+    else if (type1->kind == BASIC)  // 如果两个都是BASIC类型
+    {
+        if (type1->u.basic != type2->u.basic)
+            return 1;
+    }
+    return 0;
 }

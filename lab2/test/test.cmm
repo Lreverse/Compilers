@@ -1,7 +1,0 @@
-int a, b, c;
-float d[10];
-
-int func(int g, int h[1][2])
-{
-    int a[10] = 0;
-}
