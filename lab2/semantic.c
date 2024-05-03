@@ -286,7 +286,7 @@ void Stmt(Tnode *node, Type rtn_type)
     {
         Exp(node->lchild->rsibling->rsibling);
         Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling, rtn_type);
-        if (!strcmp(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->name, "ELSE"))
+        if (node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling != NULL)   // 遇到"ELSE"
         {
             Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->rsibling, rtn_type);
         }
@@ -520,7 +520,19 @@ Type Exp(Tnode *node)
         type->u.basic = BASIC_FLOAT;
         return type;
     }
+    else if (!strcmp(node->lchild->name, "LP"))
+    {
+        Type type = NULL;
+        type = Exp(node->lchild->rsibling);
+        return type;
+    }
     else if (!strcmp(node->lchild->name, "MINUS"))
+    {
+        Type type = NULL;
+        type = Exp(node->lchild->rsibling);
+        return type;
+    }
+    else if (!strcmp(node->lchild->name, "NOT"))
     {
         Type type = NULL;
         type = Exp(node->lchild->rsibling);
