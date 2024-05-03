@@ -1,5 +1,10 @@
+struct test
+{
+    float a, b;
+};
+
 int main()
 {
-    int i = 1;
-    return 1;
+    struct test y;
+    int a = 10;
 }

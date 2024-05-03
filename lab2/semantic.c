@@ -35,7 +35,12 @@ void ExtDef(Tnode *node)
     }
 }
 
-/* 类型描述符 */
+/* 
+ *  类型描述符
+ *  
+ *  返回值：每个结点的类型
+ *  
+ */
 Type Specifier(Tnode *node)
 {
     Type type = (Type)malloc(sizeof(Type_));
@@ -50,7 +55,7 @@ Type Specifier(Tnode *node)
     {
         type->kind = STRUCTURE;
         type->u.structure = NULL;
-        // StructSpecifier(node->lchild, type);
+        StructSpecifier(node->lchild, type);
     }
     return type;
 }
@@ -61,7 +66,7 @@ void ExtDecList(Tnode *node, Type type)
     VarDec(node->lchild, type, VARIABLE);
     if (node->lchild->rsibling)
     {
-        // 对于int a, b, c;的情况，进行递归调用
+        // 对于`int a, b, c;`的情况，进行递归调用
         ExtDecList(node->lchild->rsibling->rsibling, type);
     }
 }
@@ -75,10 +80,54 @@ enum BASIC_TYPE TYPE(Tnode *node)
 }
 
 /* 结构体定义，在此处插入符号表 */
-// FieldList StructSpecifier(Tnode *node, Type type)
-// {
-    
-// }
+void StructSpecifier(Tnode *node, Type type)
+{
+    // 结构体类型定义
+    if (!strcmp(node->lchild->rsibling->name, "OptTag"))   // 说明该结构体有名字
+    {
+        DefList(node->lchild->rsibling->rsibling->rsibling, type);
+
+        /* Error type 16 */
+        if (check(SymbolTable, node->lchild->rsibling->lchild->value, STRUC))
+        {
+            printf("Error type 16 at Line %d: Duplicated name \"%s\"\n", node->lineno, node->lchild->rsibling->lchild->value);
+            return;
+        }
+        HashNode Hnode = createHnode(node->lchild->rsibling->lchild->value, type);
+        insertHnode(SymbolTable, Hnode);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "LC"))   // 匿名结构体
+    {
+        DefList(node->lchild->rsibling->rsibling, type);
+        
+        // 给匿名结构体取名字=所有域的名字之和
+        // 由于在createHnode时，是直接赋值字符地址的，所以这里需要malloc
+        FieldList p = type->u.structure;
+        char *name = (char*)malloc(sizeof(char) * 32);
+        strcpy(name, "anonymous");
+        while(p)
+        {
+            strcat(name, p->name);
+            p = p->tail;
+        }
+        HashNode Hnode = createHnode(name, type);
+        insertHnode(SymbolTable, Hnode);
+    }
+    // 声明结构体变量
+    else
+    {
+        Type type_struc = check(SymbolTable, node->lchild->rsibling->lchild->value, STRUC);
+        if (type_struc == NULL)
+        {
+            /* Error type 17 */
+            printf("Error type 17 at Line %d: Undefined structure \"%s\"\n", node->lineno, node->lchild->rsibling->lchild->value);
+        }
+        else
+        {
+            type->u.structure = type_struc->u.structure;
+        }
+    }
+}
 
 /* 获得变量名和类型，将其插入到符号表中 */
 FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
@@ -117,6 +166,15 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
             argv->tail = NULL;
             return argv;
         }
+        else if (flag == STRUC)   // 结构体声明
+        {
+            // 生成FieldList链接到结构体结点
+            FieldList argv = (FieldList)malloc(sizeof(FieldList_));
+            argv->name = node->lchild->value;
+            argv->type = type;
+            argv->tail = NULL;
+            return argv;
+        }
     }
     else if (!strcmp(node->lchild->name, "VarDec"))
     {
@@ -129,38 +187,63 @@ FieldList VarDec(Tnode *node, Type type, enum VarDec_flag flag)
     /* int a[10][3] */
 }
 
-void DefList(Tnode *node)
+/*
+ *  定义列表
+ * 
+ *  如果是由结构体派生而来的，则需要进行将结构体里的变量链接(在Dec处链接)
+ */
+void DefList(Tnode *node, Type struc_type)
 {
     if (node == NULL)   // 空产生式
         return;
-    Def(node->lchild);
-    DefList(node->lchild->rsibling);
+    Def(node->lchild, struc_type);
+    DefList(node->lchild->rsibling, struc_type);
 }
 
-void Def(Tnode *node)
+void Def(Tnode *node, Type struc_type)
 {
     Type type = Specifier(node->lchild);
-    DecList(node->lchild->rsibling, type);
+    DecList(node->lchild->rsibling, type, struc_type);
 }
 
-void DecList(Tnode *node, Type type)
+void DecList(Tnode *node, Type type, Type struc_type)
 {
-    Dec(node->lchild, type);
+    Dec(node->lchild, type, struc_type);
     if (node->lchild->rsibling)
     {
         // 对于逗号，进行递归调用
-        DecList(node->lchild->rsibling->rsibling, type);
+        DecList(node->lchild->rsibling->rsibling, type, struc_type);
     }
 }
 
-void Dec(Tnode *node, Type type)
+void Dec(Tnode *node, Type type, Type struc_type)
 {
-    VarDec(node->lchild, type, VARIABLE);
+    if (struc_type == NULL)
+    {
+        VarDec(node->lchild, type, VARIABLE);
+    }
+    else
+    {
+        FieldList structure = VarDec(node->lchild, type, STRUC);
+        /* Error type 15 */
+        FieldList p = struc_type->u.structure;
+        while(p)
+        {
+            if (!strcmp(structure->name, p->name))
+            {
+                printf("Error type 15 at Line %d: Redefined field \"%s\"\n", node->lineno, structure->name);
+                return;
+            }
+            p = p->tail;
+        }
+        structure->tail = struc_type->u.structure;     // 采用头插法
+        struc_type->u.structure = structure;
+    }
 
     if (node->lchild->rsibling)
     {
         // 定义时赋值
-        if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
+        if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP") && struc_type == NULL)
         {
             Type type_cmp = Exp(node->lchild->rsibling->rsibling);
             if (type->kind != type_cmp->kind)
@@ -180,6 +263,10 @@ void Dec(Tnode *node, Type type)
                 //     Type type2 = get_array_type(type_cmp);
                 // }
             }
+        }
+        else if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP") && struc_type != NULL)
+        {
+            printf("Error type 15 at Line %d: Prohibit initialization of variables in structure\n", node->lineno);
         }
     }
 }
@@ -242,12 +329,12 @@ void CompSt(Tnode *node, Type rtn_type)
     if (!strcmp(node->lchild->rsibling->rsibling->name, "RC"))
     {
         if (!strcmp(node->lchild->rsibling->name, "DefList"))
-            DefList(node->lchild->rsibling);
+            DefList(node->lchild->rsibling, NULL);
         else if (!strcmp(node->lchild->rsibling->name, "StmtList"))
             StmtList(node->lchild->rsibling, rtn_type);
         return;
     }
-    DefList(node->lchild->rsibling);
+    DefList(node->lchild->rsibling, NULL);
     StmtList(node->lchild->rsibling->rsibling, rtn_type);
     // 因为DefList和StmtList都可以为空产生式，所以如果这里不进行比较，会导致传入错误结点，导致后续分析出错，出现段错误
 }
@@ -304,10 +391,11 @@ Type Exp(Tnode *node)
     if (!strcmp(node->lchild->name, "Exp"))
     {
         Type type1, type2;
-        type1 = Exp(node->lchild);
-        type2 = Exp(node->lchild->rsibling->rsibling);
         if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
         {
+            type1 = Exp(node->lchild);
+            type2 = Exp(node->lchild->rsibling->rsibling);
+
             /* 下层type不合法 */
             if (type1 == NULL)
                 return NULL;
@@ -348,6 +436,9 @@ Type Exp(Tnode *node)
         }
         else if (!strcmp(node->lchild->rsibling->name, "LB"))  // 访问数组
         {
+            type1 = Exp(node->lchild);
+            type2 = Exp(node->lchild->rsibling->rsibling);
+
             /* 下层type不合法 */
             if (type1 == NULL)
                 return NULL;
@@ -380,10 +471,33 @@ Type Exp(Tnode *node)
         }
         else if (!strcmp(node->lchild->rsibling->name, "DOT"))  // 访问结构体
         {
+            type1 = Exp(node->lchild);
+            /* Error type 13 */
+            if(type1->kind != STRUCTURE)
+            {
+                printf("Error type 13 at Line %d: Illegal use of \".\"\n", node->lineno);
+                return NULL;
+            }
 
+            // 遍历对应结构体的所有对象，查看是否有ID所对应的值的变量
+            FieldList p = type1->u.structure;
+            while (p)
+            {
+                if (!strcmp(p->name, node->lchild->rsibling->rsibling->value)) 
+                {
+                    return p->type;
+                }
+                p = p->tail;
+            }
+            /* Error type 14 */
+            printf("Error type 14 at Line %d: Non-existent field \"%s\"\n", node->lineno, node->lchild->rsibling->rsibling->value);
+            return NULL;
         }
         else  // 处理操作符
         {
+            type1 = Exp(node->lchild);
+            type2 = Exp(node->lchild->rsibling->rsibling);
+
             /* 下层type不合法 */
             if (type1 == NULL)
                 return NULL;

@@ -25,7 +25,7 @@ void initHashT(symbol_Table Table)
 }
 
 /*
- *  flag：表示参数name是变量名还是函数名
+ *  flag：VARIVLE表示变量名；FUNCTION还是函数名；STRUC表示结构体声明
  * 
  *  该函数既可以用来检查是否重复定义，又可以检查使用之前是否已经定义
  *  1. 重复定义：返回非空代表该符号重复定义
@@ -40,14 +40,21 @@ Type check(symbol_Table Table, char *name, enum VarDec_flag flag)
     {
         if(flag == VARIABLE)
         {
-            if(!strcmp(p->name, name) && p->type->kind != FUNCTION)
+            if (!strcmp(p->name, name) && p->type->kind != FUNCTION)
             {
                 return p->type;
             }
         }
         else if (flag == PARAMETER)
         {
-            if(!strcmp(p->name, name) && p->type->kind == FUNCTION)
+            if (!strcmp(p->name, name) && p->type->kind == FUNCTION)
+            {
+                return p->type;
+            }
+        }
+        else if (flag == STRUC)
+        {
+            if (!strcmp(p->name, name) && p->type->kind == STRUCTURE)
             {
                 return p->type;
             }
@@ -93,22 +100,50 @@ void printHashT(symbol_Table Table)
         while(p)
         {
             int kind = p->type->kind;
-            printf("%d:  %-8s  kind = %d    ", j, p->name, kind);
+            printf("%-6d   %-15s  kind = %-6d", j, p->name, kind);
 
             // 类型0：basic
             if (kind == 0)
-                printf("basic = %d\n", p->type->u.basic);
+            {
+                if (p->type->u.basic == BASIC_INT)
+                    printf("int\n");
+                else if (p->type->u.basic == BASIC_FLOAT)
+                    printf("float\n");
+            }
             // 类型1：array
             else if (kind == 1)
             {
                 Type elem = p->type->u.array.elem;
-                printf("array = %s[%d]", p->name, p->type->u.array.size);
+                printf("%s[%d]", p->name, p->type->u.array.size);
                 while (elem && elem->kind == ARRAY)
                 {
                     printf("[%d]", elem->u.array.size);
                     elem = elem->u.array.elem;
                 }
                 printf("\n");
+            }
+            // 类型2：structure
+            //（通过p->type->u.structure来判断是变量还是结构体声明）
+            else if (kind == 2)
+            {
+                FieldList structure = p->type->u.structure;
+                if (structure == NULL)
+                {
+                    printf("%s\n", p->name);
+                }
+                else
+                {
+                    printf("struct %s{", p->name);
+                    while (structure)
+                    {
+                        printf("%s", structure->name);
+                        structure = structure->tail;
+                        if (structure)
+                            printf(", ");
+                    }
+                    printf("}\n");
+                }
+                
             }
             // 类型3：function
             else if (kind == 3)
