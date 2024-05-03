@@ -47,5 +47,5 @@
 |`initHashT`|初始化哈希表，将所有的桶置为NULL|
 |`createHnode`|建立一个哈希结点|
 |`insertHnode`|向哈希表中插入一个结点(头插法)|
-|`printHashT`|打印哈希树|
+|`printHashT`|打印哈希表|
 |`check`|检查重复定义，或者已经定义|
