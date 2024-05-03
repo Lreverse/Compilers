@@ -274,8 +274,10 @@ void Stmt(Tnode *node, Type rtn_type)
     {
         // 需要判断返回类型
         Type type = Exp(node->lchild->rsibling);
+        if (type == NULL)
+            return;
         /* Error type 8 */
-        if(type_cmp(type, rtn_type))
+        if (type_cmp(type, rtn_type))
         {
             printf("Error type 8 at Line %d: Type mismatched for return\n", node->lineno);
         }
@@ -346,6 +348,12 @@ Type Exp(Tnode *node)
         }
         else if (!strcmp(node->lchild->rsibling->name, "LB"))  // 访问数组
         {
+            /* 下层type不合法 */
+            if (type1 == NULL)
+                return NULL;
+            if (type2 == NULL)
+                return NULL;
+            
             if (!strcmp(node->lchild->lchild->name, "ID"))
             {
                 /* Error type 10 */
@@ -376,6 +384,12 @@ Type Exp(Tnode *node)
         }
         else  // 处理操作符
         {
+            /* 下层type不合法 */
+            if (type1 == NULL)
+                return NULL;
+            if (type2 == NULL)
+                return NULL;
+
             if (type1->kind != type2->kind)  // 基本类型不一致
             {
                 printf("Error type 7 at Line %d: Type mismatched for operands\n", node->lineno);
@@ -414,10 +428,17 @@ Type Exp(Tnode *node)
         }
         else   // 说明这是个函数名
         {
-            Type type = check(SymbolTable, node->lchild->value, PARAMETER);
-            if(!type)
+            Type type = check(SymbolTable, node->lchild->value, VARIABLE);
+            if (type)
+            {
+                printf("Error type 11 at Line %d: \"%s\" is not a function\n", node->lineno, node->lchild->value);
+                return NULL;
+            }
+            type = check(SymbolTable, node->lchild->value, PARAMETER);
+            if (!type)
             {
                 printf("Error type 2 at Line %d: Undefined function \"%s\"\n", node->lineno, node->lchild->value);
+                return NULL;
             }
             else
             {
