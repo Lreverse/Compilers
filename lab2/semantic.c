@@ -421,7 +421,66 @@ Type Exp(Tnode *node)
             }
             else
             {
-                // 对函数参数暂时不做处理，回头再来
+                FieldList argv = (FieldList)malloc(sizeof(FieldList_));   // 头指针
+                argv->tail = NULL;
+                Args(node->lchild->rsibling->rsibling, argv);
+
+                /* Error type 9 (比较形参和实参的数目和类型是否一致) */
+                FieldList p = type->u.function.argv, p_cmp = argv->tail;
+                // 判断类型
+                while (p && p_cmp)
+                {
+                    if (type_cmp(p->type, p_cmp->type))
+                    {
+                        printf("Error type 9 at Line %d: Function \"%s(", node->lineno, node->lchild->value);
+                        p = type->u.function.argv;
+                        while (p)
+                        {
+                            print_type_name(p->type);
+                            p = p->tail;
+                            if (p)
+                                printf(", ");
+                        }
+
+                        printf(")\" is not applicable for arguments \"(");
+                        p_cmp = argv->tail;
+                        while (p_cmp)
+                        {
+                            print_type_name(p_cmp->type);
+                            p_cmp = p_cmp->tail;
+                            if (p_cmp)
+                                printf(", ");
+                        }
+                        printf(")\"\n");
+                        break;
+                    }
+                    p = p->tail;
+                    p_cmp = p_cmp ->tail;
+                }
+                // 判断数量
+                if (p != NULL || p_cmp != NULL)
+                {
+                    printf("Error type 9 at Line %d: Function \"%s(", node->lineno, node->lchild->value);
+                        p = type->u.function.argv;
+                        while (p)
+                        {
+                            print_type_name(p->type);
+                            p = p->tail;
+                            if (p)
+                                printf(", ");
+                        }
+
+                        printf(")\" is not applicable for arguments \"(");
+                        p_cmp = argv->tail;
+                        while (p_cmp)
+                        {
+                            print_type_name(p_cmp->type);
+                            p_cmp = p_cmp->tail;
+                            if (p_cmp)
+                                printf(", ");
+                        }
+                        printf(")\"\n");
+                }
                 return get_function_rtnType(type);
             }
         }
@@ -445,6 +504,20 @@ Type Exp(Tnode *node)
         Type type = NULL;
         type = Exp(node->lchild->rsibling);
         return type;
+    }
+}
+
+/* 处理语句中的函数参数 */
+void Args(Tnode *node, FieldList argv)
+{
+    Type type = Exp(node->lchild);
+    FieldList p = (FieldList)malloc(sizeof(FieldList_));
+    p->type = type;
+    p->tail = NULL;
+    argv->tail = p;
+    if (node->lchild->rsibling != NULL)
+    {
+        Args(node->lchild->rsibling->rsibling, p);
     }
 }
 
@@ -483,4 +556,16 @@ int type_cmp(Type type1, Type type2)
             return 1;
     }
     return 0;
+}
+
+/* 打印类型的名字 */
+void print_type_name(Type type)
+{
+    if (type->kind == BASIC)
+    {
+        if (type->u.basic == BASIC_INT)
+            printf("int");
+        else if (type->u.basic == BASIC_FLOAT)
+            printf("float");
+    }
 }

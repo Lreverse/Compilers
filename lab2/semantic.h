@@ -27,10 +27,12 @@ void CompSt(Tnode *node, Type rtn_type);
 void StmtList(Tnode *node, Type rtn_type);
 void Stmt(Tnode *node, Type rtn_type);
 Type Exp(Tnode *node);
+void Args(Tnode *node, FieldList argv);
 
 
 Type get_array_type(Type type);
 Type get_function_rtnType(Type type);
 int type_cmp(Type type1, Type type2);
+void print_type_name(Type type);
 
 #endif
