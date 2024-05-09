@@ -9,14 +9,7 @@ void initList(InterCodes head)
     head->next = head;
 }
 
-// InterCodes createIR(kind)
-// {
-//     InterCodes ir = (InterCodes)malloc(sizeof(InterCodes_));
-//     ir->prev = NULL;
-//     ir->next = NULL;
-//     return ir;
-// }
-
+/* 将中间代码结点插入链表 */
 void insertList(InterCodes head, InterCodes node)
 {
     // 头插法（打印时向前遍历）

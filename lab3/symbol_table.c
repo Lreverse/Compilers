@@ -22,6 +22,34 @@ void initHashT(symbol_Table Table)
     {
         Table->HashT[i] = NULL;
     }
+
+    // 预先添加read和write这两个预定义的函数
+    HashNode node = NULL;
+    Type type_int = (Type)malloc(sizeof(Type_));
+    type_int->kind = BASIC;
+    type_int->u.basic = BASIC_INT;
+
+    Type type_read = (Type)malloc(sizeof(Type_));
+    type_read->kind = FUNCTION;
+    type_read->u.function.argc = 0;
+    type_read->u.function.argv = NULL;
+    type_read->u.function.rtnType = type_int;
+    node = createHnode("read", type_read);
+    insertHnode(Table, node);
+
+    FieldList argv = (FieldList)malloc(sizeof(FieldList_));
+    argv->name = (char*)malloc(sizeof(char) * 32);
+    strcpy(argv->name, "n");
+    argv->type = type_int;
+    argv->tail = NULL;
+
+    Type type_write = (Type)malloc(sizeof(Type_));
+    type_write->kind = FUNCTION;
+    type_write->u.function.argc = 1;
+    type_write->u.function.argv = argv;
+    type_write->u.function.rtnType = type_int;
+    node = createHnode("write", type_write);
+    insertHnode(Table, node);
 }
 
 /*
@@ -150,7 +178,19 @@ void printHashT(symbol_Table Table)
             {
                 int argc = p->type->u.function.argc;
                 FieldList argv = p->type->u.function.argv;
-                printf("%s(", p->name);
+                
+                // 打印返回类型
+                Type rtnType = p->type->u.function.rtnType;
+                if (rtnType->kind == BASIC)
+                {
+                    if (rtnType->u.basic == BASIC_INT)
+                        printf("int");
+                    else if (rtnType->u.basic == BASIC_FLOAT)
+                        printf("float");
+                }
+
+                // 打印函数名
+                printf(" %s(", p->name);
                 while(argv)
                 {
                     // 判断参数类型
