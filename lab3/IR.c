@@ -1,6 +1,9 @@
 #include "IR.h"
 
-InterCodes IR_Head = NULL;
+int var_no = 1;              // 变量标号
+int temp_no = 1;             // 临时变量标号
+InterCodes IR_Head = NULL;   // 链表头节点
+
 
 /* 初始化双循环链表 */
 void initList(InterCodes head)
@@ -15,9 +18,8 @@ void insertList(InterCodes head, InterCodes node)
     // 头插法（打印时向前遍历）
     node->prev = head;
     node->next = head->next;
+    node->next->prev = node;
     head->next = node;
-    if (head->prev == head)
-        head->prev = node;
 }
 
 /* 打印操作数 */
@@ -44,6 +46,9 @@ void print_IR(InterCodes head)
                 break;
             case IR_FUNCTION:
                 printf("FUNCTION %s :\n", IR->code.u.one.op->u.value);
+                break;
+            case IR_PARAM:
+                printf("PARAM v%d :\n", IR->code.u.one.op->u.no);
                 break;
             case IR_ASSIGN:
                 print_OP(IR->code.u.assign.left);
@@ -84,7 +89,7 @@ void print_IR(InterCodes head)
                 printf("\n");
                 break;
             default:
-                printf("\n");
+                printf("default\n");
                 break;
         }
         IR = IR->prev;
@@ -106,7 +111,7 @@ void translate_ExtDefList(Tnode *node)
     translate_ExtDefList(node->lchild->rsibling);
 }
 
-/* 全局定义 */
+/* ExtDef */
 void translate_ExtDef(Tnode *node)
 {
     char Node_name[32];
@@ -126,6 +131,7 @@ void translate_ExtDef(Tnode *node)
     }
 }
 
+/* FunDec */
 void translate_FunDec(Tnode *node)
 {
     // 生成操作符
@@ -144,14 +150,60 @@ void translate_FunDec(Tnode *node)
     }
 }
 
+/* VarList */
 void translate_VarList(Tnode *node)
 {
-
+    translate_ParamDec(node->lchild);
+    if (node->lchild->rsibling)
+        translate_VarList(node->lchild->rsibling->rsibling);
 }
 
+/* ParamDec */
+void translate_ParamDec(Tnode *node)
+{
+    // 生成操作符
+    Operand op = (Operand)malloc(sizeof(Operand_));
+    op->kind = OP_VARIABLE;
+    op->u.no = var_no;
+    var_no++;
+
+    // 生成中间代码
+    InterCodes ir = (InterCodes)malloc(sizeof(InterCodes_));
+    ir->code.kind = IR_PARAM;
+    ir->code.u.one.op = op;
+    insertList(IR_Head, ir);
+}
+
+/* CompSt */
 void translate_CompSt(Tnode *node)
 {
+    if (!strcmp(node->lchild->rsibling->name, "RC"))
+        return;
+    if (!strcmp(node->lchild->rsibling->rsibling->name, "RC"))
+    {
+        if (!strcmp(node->lchild->rsibling->name, "DefList")) {}
+            // DefList(node->lchild->rsibling);
+        else if (!strcmp(node->lchild->rsibling->name, "StmtList"))
+            translate_StmtList(node->lchild->rsibling);
+        return;
+    }
+    // DefList(node->lchild->rsibling);
+    translate_StmtList(node->lchild->rsibling->rsibling);
+    // 因为DefList和StmtList都可以为空产生式，所以如果这里不进行比较，会导致传入错误结点，导致后续分析出错，出现段错误
+}
 
+/* StmtList */
+void translate_StmtList(Tnode *node)
+{
+    if (node == NULL)  // 空产生式
+        return;
+    translate_Stmt(node->lchild);
+    translate_StmtList(node->lchild->rsibling);
+}
+
+void translate_Stmt(Tnode *node)
+{
+    
 }
 
 /* Exp */

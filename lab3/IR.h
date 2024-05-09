@@ -11,13 +11,12 @@ typedef struct Operand_* Operand;
 typedef struct InterCode_* InterCode;
 typedef struct InterCodes_* InterCodes;
 
-extern InterCodes IR_Head;
 
 typedef struct Operand_ 
 {
     enum { OP_VARIABLE, OP_CONSTANT, OP_ADDRESS } kind;
     union {
-        int var_no;
+        int no;
         char value[32];
     } u;
 } Operand_;
@@ -25,8 +24,8 @@ typedef struct Operand_
 typedef struct InterCode_
 {
     enum { 
-            IR_LABEL, IR_FUNCTION, IR_ASSIGN, 
-            IR_ADD, IR_SUB, IR_MUL, IR_DIV 
+            IR_LABEL, IR_FUNCTION, IR_PARAM, 
+            IR_ASSIGN, IR_ADD, IR_SUB, IR_MUL, IR_DIV 
         } kind;
     union {
         struct { Operand op; } one;   // 只有一个操作数
@@ -54,7 +53,9 @@ void translate_ExtDefList(Tnode *node);
 void translate_ExtDef(Tnode *node);
 void translate_FunDec(Tnode *node);
 void translate_VarList(Tnode *node);
+void translate_ParamDec(Tnode *node);
 void translate_CompSt(Tnode *node);
+void translate_StmtList(Tnode *node);
 void translate_Stmt(Tnode *node);
 void translate_Exp(Tnode *node);
 

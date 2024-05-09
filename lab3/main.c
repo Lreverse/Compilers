@@ -11,6 +11,7 @@ int Error_flag = 0; // 判断源文件是否出现语法错误
 extern FILE *yyin;
 extern int yyparse();
 extern void yyrestart(FILE *);
+extern InterCodes IR_Head;
 
 int main(int argc, char **argv)
 {
