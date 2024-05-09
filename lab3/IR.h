@@ -14,7 +14,7 @@ typedef struct InterCodes_* InterCodes;
 
 typedef struct Operand_ 
 {
-    enum { OP_VARIABLE, OP_CONSTANT, OP_ADDRESS } kind;
+    enum { OP_VARIABLE, OP_TEMP, OP_CONSTANT, OP_LABEL, OP_ADDRESS } kind;
     union {
         int no;
         char value[32];
@@ -24,7 +24,8 @@ typedef struct Operand_
 typedef struct InterCode_
 {
     enum { 
-            IR_LABEL, IR_FUNCTION, IR_PARAM, 
+            IR_FUNCTION, IR_PARAM, IR_RETURN,
+            IR_LABEL, IR_GOTO, 
             IR_ASSIGN, IR_ADD, IR_SUB, IR_MUL, IR_DIV 
         } kind;
     union {
@@ -57,6 +58,11 @@ void translate_ParamDec(Tnode *node);
 void translate_CompSt(Tnode *node);
 void translate_StmtList(Tnode *node);
 void translate_Stmt(Tnode *node);
-void translate_Exp(Tnode *node);
+void translate_Exp(Tnode *node, Operand place);
+void translate_Cond(Tnode *node, Operand label1, Operand label2);
+
+Operand new_var(void);
+Operand new_temp(void);
+Operand new_label(void);
 
 #endif

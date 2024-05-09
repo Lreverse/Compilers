@@ -2,6 +2,7 @@
 
 int var_no = 1;              // 变量标号
 int temp_no = 1;             // 临时变量标号
+int label_no = 1;            // label标号
 InterCodes IR_Head = NULL;   // 链表头节点
 
 
@@ -25,7 +26,24 @@ void insertList(InterCodes head, InterCodes node)
 /* 打印操作数 */
 void print_OP(Operand op)
 {
-
+    switch(op->kind)
+    {
+        case OP_VARIABLE:
+            printf("v%d", op->u.no);
+            break;
+        case OP_TEMP:
+            printf("t%d", op->u.no);
+            break;
+        case OP_CONSTANT:
+            printf("#%d", atoi(op->u.value));
+            break;
+        case OP_LABEL:
+            printf("label%d", op->u.no);
+            break;
+        default:
+            printf("no match\n");
+            break;
+    }
 }
 
 /* 打印中间代码 */
@@ -41,14 +59,26 @@ void print_IR(InterCodes head)
     {
         switch(IR->code.kind)
         {
-            case IR_LABEL:
-                printf("LABEL %s :\n", IR->code.u.one.op->u.value);
-                break;
             case IR_FUNCTION:
                 printf("FUNCTION %s :\n", IR->code.u.one.op->u.value);
                 break;
             case IR_PARAM:
-                printf("PARAM v%d :\n", IR->code.u.one.op->u.no);
+                printf("PARAM v%d\n", IR->code.u.one.op->u.no);
+                break;
+            case IR_RETURN:
+                printf("RETURN ");
+                print_OP(IR->code.u.one.op);
+                printf("\n");
+                break;
+            case IR_LABEL:
+                printf("LABEL ");
+                print_OP(IR->code.u.one.op);
+                printf(" :\n");
+                break;
+            case IR_GOTO:
+                printf("GOTO ");
+                print_OP(IR->code.u.one.op);
+                printf("\n");
                 break;
             case IR_ASSIGN:
                 print_OP(IR->code.u.assign.left);
@@ -162,10 +192,7 @@ void translate_VarList(Tnode *node)
 void translate_ParamDec(Tnode *node)
 {
     // 生成操作符
-    Operand op = (Operand)malloc(sizeof(Operand_));
-    op->kind = OP_VARIABLE;
-    op->u.no = var_no;
-    var_no++;
+    Operand op = new_var();
 
     // 生成中间代码
     InterCodes ir = (InterCodes)malloc(sizeof(InterCodes_));
@@ -203,11 +230,75 @@ void translate_StmtList(Tnode *node)
 
 void translate_Stmt(Tnode *node)
 {
-    
+    if (!strcmp(node->lchild->name, "Exp"))
+    {
+        translate_Exp(node->lchild, NULL);
+    }
+    else if (!strcmp(node->lchild->name, "CompSt"))
+    {
+        translate_CompSt(node->lchild );
+    }
+    else if (!strcmp(node->lchild->name, "RETURN"))
+    {
+        Operand var_temp = new_temp();
+        translate_Exp(node->lchild->rsibling, var_temp);
+        
+        InterCodes ir = (InterCodes)malloc(sizeof(InterCodes_));
+        ir->code.kind = IR_RETURN;
+        ir->code.u.one.op = var_temp;
+        insertList(IR_Head, ir);
+    }
+    else if (!strcmp(node->lchild->name, "IF"))
+    {
+        Operand label1 = new_label(), label2 = new_label();
+
+        translate_Cond(node->lchild->rsibling->rsibling, label1, label2);   // code1
+
+        InterCodes ir1 = (InterCodes)malloc(sizeof(InterCodes_));
+        ir1->code.kind = IR_LABEL;
+        ir1->code.u.one.op = label1;
+        insertList(IR_Head, ir1);
+
+        translate_Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling); // code2
+        InterCodes ir2 = (InterCodes)malloc(sizeof(InterCodes_));
+        ir2->code.kind = IR_LABEL;
+        ir2->code.u.one.op = label2;
+
+        if (node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling == NULL) 
+        {
+            insertList(IR_Head, ir2);
+        }
+        else   // 遇到"ELSE"
+        {
+            Operand label3 = new_label();
+
+            InterCodes ir_goto = (InterCodes)malloc(sizeof(InterCodes_));
+            ir_goto->code.kind = IR_GOTO;
+            ir_goto->code.u.one.op = label3;
+            insertList(IR_Head, ir_goto);
+            insertList(IR_Head, ir2);
+
+            translate_Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling->rsibling->rsibling);  // code3
+
+            InterCodes ir3 = (InterCodes)malloc(sizeof(InterCodes_));
+            ir3->code.kind = IR_LABEL;
+            ir3->code.u.one.op = label3;
+            insertList(IR_Head, ir3);
+        }
+    }
+    else if(!strcmp(node->lchild->name, "WHILE"))
+    {
+
+    }
+}
+
+void translate_Cond(Tnode *node, Operand label1, Operand label2)
+{
+
 }
 
 /* Exp */
-void translate_Exp(Tnode *node)
+void translate_Exp(Tnode *node, Operand place)
 {
     if (!strcmp(node->lchild->name, "INT"))
     {
@@ -217,4 +308,31 @@ void translate_Exp(Tnode *node)
     {
         
     }
+}
+
+Operand new_var(void)
+{
+    Operand var = (Operand)malloc(sizeof(Operand_));
+    var->kind = OP_VARIABLE;
+    var->u.no = var_no;
+    var_no++;
+    return var;
+}
+
+Operand new_temp(void)
+{
+    Operand temp = (Operand)malloc(sizeof(Operand_));
+    temp->kind = OP_TEMP;
+    temp->u.no = temp_no;
+    temp_no++;
+    return temp;
+}
+
+Operand new_label(void)
+{
+    Operand label = (Operand)malloc(sizeof(Operand_));
+    label->kind = OP_LABEL;
+    label->u.no = label_no;
+    label_no++;
+    return label;
 }
