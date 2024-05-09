@@ -3,6 +3,7 @@
 #include "Tree.h"
 #include "symbol_table.h"
 #include "semantic.h"
+#include "IR.h"
 
 Tnode *root = NULL; // 语法树的根节点
 int Error_flag = 0; // 判断源文件是否出现语法错误
@@ -28,10 +29,20 @@ int main(int argc, char **argv)
     {
         printParseTree(root);
         printf("\n");
+
+        // 生成符号表
         SymbolTable = (symbol_Table)malloc(sizeof(symbol_Table_));
         initHashT(SymbolTable);
         Program(root);
         printHashT(SymbolTable);
+        printf("\n");
+
+        // 生成中间代码
+        IR_Head = (InterCodes)malloc(sizeof(InterCodes_));  // 生成头节点
+        initList(IR_Head);
+        translate_Program(root);
+        printf("Intermediate code:\n");
+        print_IR(IR_Head);
     }
         
     return 0;

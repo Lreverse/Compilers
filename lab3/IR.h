@@ -1,15 +1,17 @@
 #ifndef __IR_H
 #define __IR_H
 
-#include <stdio.h>
-#include <string.h>
-#include "Tree.h"
 #include "symbol_table.h"
+#include "Tree.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-typedef Operand_* Operand;
-typedef InterCode_* InterCode;
-typedef InterCodes_* InterCodes;
+typedef struct Operand_* Operand;
+typedef struct InterCode_* InterCode;
+typedef struct InterCodes_* InterCodes;
 
+extern InterCodes IR_Head;
 
 typedef struct Operand_ 
 {
@@ -40,9 +42,20 @@ typedef struct InterCodes_ {
     struct InterCodes_ *prev, *next;
 } InterCodes_;
 
-void translate_Stmt();
-void translate_Exp(Tnode *node);
-void translate_CompSt();
+/* 链表操作 */
+void initList(InterCodes head);
+void insertList(InterCodes head, InterCodes node);
 
+/* 翻译函数 */
+void print_OP(Operand op);
+void print_IR(InterCodes IR);
+void translate_Program(Tnode *node);
+void translate_ExtDefList(Tnode *node);
+void translate_ExtDef(Tnode *node);
+void translate_FunDec(Tnode *node);
+void translate_VarList(Tnode *node);
+void translate_CompSt(Tnode *node);
+void translate_Stmt(Tnode *node);
+void translate_Exp(Tnode *node);
 
 #endif

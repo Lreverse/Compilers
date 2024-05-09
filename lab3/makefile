@@ -6,7 +6,7 @@ BISON = bison
 FLEXFLAGS =
 BISONFLAGS = -d
 
-OBJS = main.c Tree.c syntax.tab.c symbol_table.c semantic.c
+OBJS = main.c Tree.c syntax.tab.c symbol_table.c semantic.c IR.c
 TARGET = parser
 
 all: lex.yy.c $(TARGET) 
