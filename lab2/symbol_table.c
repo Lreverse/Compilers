@@ -150,7 +150,19 @@ void printHashT(symbol_Table Table)
             {
                 int argc = p->type->u.function.argc;
                 FieldList argv = p->type->u.function.argv;
-                printf("%s(", p->name);
+
+                // 打印返回类型
+                Type rtnType = p->type->u.function.rtnType;
+                if (rtnType->kind == BASIC)
+                {
+                    if (rtnType->u.basic == BASIC_INT)
+                        printf("int");
+                    else if (rtnType->u.basic == BASIC_FLOAT)
+                        printf("float");
+                }
+
+                // 打印函数名
+                printf(" %s(", p->name);
                 while(argv)
                 {
                     // 判断参数类型
