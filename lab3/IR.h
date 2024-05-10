@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 typedef struct Operand_* Operand;
 typedef struct InterCode_* InterCode;
@@ -14,7 +15,7 @@ typedef struct InterCodes_* InterCodes;
 
 typedef struct Operand_ 
 {
-    enum { OP_VARIABLE, OP_TEMP, OP_CONSTANT, OP_LABEL, OP_ADDRESS } kind;
+    enum { OP_VARIABLE, OP_TEMP, OP_CONSTANT, OP_LABEL, OP_RELOP, OP_ADDRESS } kind;
     union {
         int no;
         char value[32];
@@ -23,16 +24,17 @@ typedef struct Operand_
 
 typedef struct InterCode_
 {
-    enum { 
+    enum IR_TYPE { 
             IR_FUNCTION, IR_PARAM, IR_RETURN,
-            IR_LABEL, IR_GOTO, 
+            IR_LABEL, IR_GOTO, IR_IF, 
             IR_ASSIGN, IR_ADD, IR_SUB, IR_MUL, IR_DIV 
         } kind;
     union {
         struct { Operand op; } one;   // 只有一个操作数
         struct { Operand op1, op2; } two;   // 有两个操作数
-        struct { Operand result, op1, op2; } three;
-        struct { Operand left, right; } assign;
+        struct { Operand op1, op2, op3; } three;
+        struct { Operand op1, op2, op3, op4; } four;
+        // struct { Operand left, right; } assign;
     } u;
 } InterCode_;
 
@@ -64,5 +66,8 @@ void translate_Cond(Tnode *node, Operand label1, Operand label2);
 Operand new_var(void);
 Operand new_temp(void);
 Operand new_label(void);
+Operand get_relop(Tnode *node);
+
+InterCodes new_IR(enum IR_TYPE kind, int num, ...);
 
 #endif
