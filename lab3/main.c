@@ -13,6 +13,7 @@ extern int yyparse();
 extern void yyrestart(FILE *);
 extern InterCodes IR_Head;
 extern Var_node var_map;
+void get_file_name(char *path, char *file_name);
 
 int main(int argc, char **argv)
 {
@@ -49,8 +50,28 @@ int main(int argc, char **argv)
         translate_Program(root);
 
         printf("Intermediate code:\n");
+        char path[32] = "./ir/";
+        char file_name[32];
+        get_file_name(argv[1], file_name);
+        strcat(path, file_name);
+        strcat(path, ".ir");
+        printf("%s\n", path);
+        freopen(path, "w", stdout);
         print_IR(IR_Head);
     }
         
     return 0;
+}
+
+void get_file_name(char *path, char *file_name)
+{
+    char *p = NULL, *pr = NULL;
+    p = strrchr(path, '/');
+    if (p == NULL)
+        return;
+    pr = strrchr(p+1, '.');
+    if (pr != NULL)
+        strncpy(file_name, p+1, strlen(p+1)-strlen(pr));
+    else
+        strcpy(file_name, p+1);
 }

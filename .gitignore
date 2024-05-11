@@ -1,9 +1,8 @@
-/my_calculator
-/my_wc
 /.vscode
-/demo.c
 /lab2/lab_test
 lex.yy.c
 syntax.tab.c
 syntax.tab.h
 parser
+/test
+/irsim
