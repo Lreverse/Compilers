@@ -55,7 +55,7 @@ int main(int argc, char **argv)
         get_file_name(argv[1], file_name);
         strcat(path, file_name);
         strcat(path, ".ir");
-        printf("%s\n", path);
+        printf("stored in %s\n", path);
         freopen(path, "w", stdout);
         print_IR(IR_Head);
     }

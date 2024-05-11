@@ -492,7 +492,7 @@ void translate_Exp(Tnode *node, Operand place)
             {
                 Operand op = (Operand)malloc(sizeof(Operand_));
                 op->kind = OP_FUNCTION;
-                strcmp(op->u.value, node->lchild->value);
+                strcpy(op->u.value, node->lchild->value);
                 InterCodes ir = new_IR(IR_FUNC_CALL, 2, place, op);
                 insertList(IR_Head, ir);
             }
@@ -524,7 +524,7 @@ void translate_Exp(Tnode *node, Operand place)
                 }
                 Operand op = (Operand)malloc(sizeof(Operand_));
                 op->kind = OP_FUNCTION;
-                strcmp(op->u.value, node->lchild->value);
+                strcpy(op->u.value, node->lchild->value);
                 InterCodes ir_call = new_IR(IR_FUNC_CALL, 2, place, op);
                 insertList(IR_Head, ir_call);
             }
@@ -660,6 +660,10 @@ void translate_Exp(Tnode *node, Operand place)
         insertList(IR_Head, ir1);
         InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
         insertList(IR_Head, ir2);
+    }
+    else if (!strcmp(node->lchild->name, "LP"))
+    {
+        translate_Exp(node->lchild->rsibling, place);
     }
     else
     {
