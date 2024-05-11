@@ -11,6 +11,7 @@
 typedef struct Operand_* Operand;
 typedef struct InterCode_* InterCode;
 typedef struct InterCodes_* InterCodes;
+typedef struct Var_node_* Var_node;
 
 
 typedef struct Operand_ 
@@ -44,9 +45,18 @@ typedef struct InterCodes_ {
     struct InterCodes_ *prev, *next;
 } InterCodes_;
 
+typedef struct Var_node_{
+    Operand op;
+    char *name;
+    struct Var_node_ *next;
+} Var_node_;
+
 /* 链表操作 */
 void initList(InterCodes head);
 void insertList(InterCodes head, InterCodes node);
+
+void insertVarMap(Var_node head, Operand op, char *name);
+Operand get_op_from_var_map(Var_node head, char *name);
 
 /* 翻译函数 */
 void print_OP(Operand op);
@@ -57,6 +67,7 @@ void translate_ExtDef(Tnode *node);
 void translate_FunDec(Tnode *node);
 void translate_VarList(Tnode *node);
 void translate_ParamDec(Tnode *node);
+void translate_VarDec(Tnode *node, Operand op);
 void translate_CompSt(Tnode *node);
 void translate_StmtList(Tnode *node);
 void translate_Stmt(Tnode *node);

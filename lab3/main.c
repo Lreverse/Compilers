@@ -12,6 +12,7 @@ extern FILE *yyin;
 extern int yyparse();
 extern void yyrestart(FILE *);
 extern InterCodes IR_Head;
+extern Var_node var_map;
 
 int main(int argc, char **argv)
 {
@@ -41,7 +42,12 @@ int main(int argc, char **argv)
         // 生成中间代码
         IR_Head = (InterCodes)malloc(sizeof(InterCodes_));  // 生成头节点
         initList(IR_Head);
+
+        var_map = (Var_node)malloc(sizeof(Var_node_));
+        var_map->next = NULL;
+
         translate_Program(root);
+
         printf("Intermediate code:\n");
         print_IR(IR_Head);
     }

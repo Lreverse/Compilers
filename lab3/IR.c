@@ -3,7 +3,8 @@
 int var_no = 1;              // 变量标号
 int temp_no = 1;             // 临时变量标号
 int label_no = 1;            // label标号
-InterCodes IR_Head = NULL;   // 链表头节点
+InterCodes IR_Head = NULL;   // 链表头指针，头节点在主函数生成
+Var_node var_map = NULL;     // 变量映射表头指针，头节点在主函数生成
 
 
 /* 初始化双循环链表 */
@@ -21,6 +22,34 @@ void insertList(InterCodes head, InterCodes node)
     node->next = head->next;
     node->next->prev = node;
     head->next = node;
+}
+
+/* 存储变量映射结点 */
+void insertVarMap(Var_node head, Operand op, char *value)
+{
+    Var_node node = (Var_node)malloc(sizeof(Var_node_));
+    node->next = NULL;
+    node->op = op;
+    node->name = value;
+
+    // 头插法
+    node->next = head->next;
+    head->next = node;
+}
+
+/* 根据ID名字获取变量op */
+Operand get_op_from_var_map(Var_node head, char *name)
+{
+    Var_node p = head->next;   // 跳过第一个头结点
+    while(p)
+    {
+        if (!strcmp(p->name, name))
+        {
+            return p->op;
+        }
+        p = p->next;
+    }
+    return NULL;
 }
 
 /* 打印操作数 */
@@ -94,12 +123,12 @@ void print_IR(InterCodes head)
                 print_OP(IR->code.u.four.op4);
                 printf("\n");
                 break;
-            // case IR_ASSIGN:
-            //     print_OP(IR->code.u.two.op1);
-            //     printf(" := ");
-            //     print_OP(IR->code.u.two.op2);
-            //     printf("\n");
-            //     break;
+            case IR_ASSIGN:
+                print_OP(IR->code.u.two.op1);
+                printf(" := ");
+                print_OP(IR->code.u.two.op2);
+                printf("\n");
+                break;
             // case IR_ADD:
             //     print_OP(IR->code.u.three.op1);
             //     printf(" := ");
@@ -210,6 +239,17 @@ void translate_ParamDec(Tnode *node)
     // 生成中间代码
     InterCodes ir = new_IR(IR_PARAM, 1, op);
     insertList(IR_Head, ir);
+
+    translate_VarDec(node->lchild->rsibling, op);
+}
+
+/* VarDec */
+void translate_VarDec(Tnode *node, Operand op)
+{
+    if (!strcmp(node->lchild->name, "ID"))
+    {
+        insertVarMap(var_map, op, node->lchild->value);
+    }
 }
 
 /* CompSt */
@@ -239,6 +279,7 @@ void translate_StmtList(Tnode *node)
     translate_StmtList(node->lchild->rsibling);
 }
 
+/* Stmt */
 void translate_Stmt(Tnode *node)
 {
     if (!strcmp(node->lchild->name, "Exp"))
@@ -289,7 +330,17 @@ void translate_Stmt(Tnode *node)
     }
     else if(!strcmp(node->lchild->name, "WHILE"))
     {
-
+        Operand label1 = new_label(), label2 = new_label(), label3 = new_label();
+        InterCodes ir1 = new_IR(IR_LABEL, 1, label1);
+        insertList(IR_Head, ir1);
+        translate_Cond(node->lchild->rsibling->rsibling, label2, label3);  // code1
+        InterCodes ir2 = new_IR(IR_LABEL, 1, label2);
+        insertList(IR_Head, ir2);
+        translate_Stmt(node->lchild->rsibling->rsibling->rsibling->rsibling);  // code2
+        InterCodes ir3 = new_IR(IR_GOTO, 1, label1);
+        insertList(IR_Head, ir3);
+        InterCodes ir4 = new_IR(IR_LABEL, 1, label3);
+        insertList(IR_Head, ir4);
     }
 }
 
@@ -353,11 +404,53 @@ void translate_Exp(Tnode *node, Operand place)
 {
     if (!strcmp(node->lchild->name, "INT"))
     {
-        
+        Operand op = (Operand)malloc(sizeof(Operand_));
+        op->kind = OP_CONSTANT;
+        strcpy(op->u.value, node->lchild->value);
+        InterCodes ir = new_IR(IR_ASSIGN, 2, place, op);
+        insertList(IR_Head, ir);
     }
     else if (!strcmp(node->lchild->name, "ID"))
     {
+        Operand op = get_op_from_var_map(var_map, node->lchild->value);
+        // if (op == NULL)
+        // {
+        //     printf("op is null\n");
+        // }
+        InterCodes ir = new_IR(IR_ASSIGN, 2, place, op);
+        insertList(IR_Head, ir);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
+    {
+        if (!strcmp(node->lchild->lchild->name, "ID") && node->lchild->lchild->rsibling == NULL)  // 左值为单个变量的情况
+        {
+            Operand t1 = new_temp();
+            Operand v = get_op_from_var_map(var_map, node->lchild->lchild->value);
+            // if (v == NULL)
+            // {
+            //     printf("op is null\n");
+            // }
+            translate_Exp(node->lchild->rsibling->rsibling, t1);
+            InterCodes ir = new_IR(IR_ASSIGN, 2, v, t1);
+            insertList(IR_Head, ir);
+            if (place != NULL)
+            {
+                InterCodes ir_option = new_IR(IR_ASSIGN, 2, place, v);
+                insertList(IR_Head, ir_option);
+            }
+        }
+        else
+        {
+            printf("left value is not a single variable\n");
+        }
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "PLUS"))
+    {
         
+    }
+    else if (!strcmp(node->lchild->name, "MINUS"))
+    {
+
     }
 }
 
