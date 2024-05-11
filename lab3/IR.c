@@ -72,6 +72,9 @@ void print_OP(Operand op)
         case OP_RELOP:
             printf("%s", op->u.value);
             break;
+        case OP_FUNCTION:
+            printf("%s", op->u.value);
+            break;
         default:
             printf("\nprint_OP: no match\n");
             break;
@@ -92,10 +95,14 @@ void print_IR(InterCodes head)
         switch(IR->code.kind)
         {
             case IR_FUNCTION:
-                printf("FUNCTION %s :\n", IR->code.u.one.op->u.value);
+                printf("FUNCTION ");
+                print_OP(IR->code.u.one.op);
+                printf(" :\n");
                 break;
             case IR_PARAM:
-                printf("PARAM v%d\n", IR->code.u.one.op->u.no);
+                printf("PARAM ");
+                print_OP(IR->code.u.one.op);
+                printf("\n");
                 break;
             case IR_RETURN:
                 printf("RETURN ");
@@ -129,38 +136,59 @@ void print_IR(InterCodes head)
                 print_OP(IR->code.u.two.op2);
                 printf("\n");
                 break;
-            // case IR_ADD:
-            //     print_OP(IR->code.u.three.op1);
-            //     printf(" := ");
-            //     print_OP(IR->code.u.three.op2);
-            //     printf(" + ");
-            //     print_OP(IR->code.u.three.op3);
-            //     printf("\n");
-            //     break;
-            // case IR_SUB:
-            //     print_OP(IR->code.u.three.op1);
-            //     printf(" := ");
-            //     print_OP(IR->code.u.three.op2);
-            //     printf(" - ");
-            //     print_OP(IR->code.u.three.op3);
-            //     printf("\n");
-            //     break;
-            // case IR_MUL:
-            //     print_OP(IR->code.u.three.op1);
-            //     printf(" := ");
-            //     print_OP(IR->code.u.three.op2);
-            //     printf(" * ");
-            //     print_OP(IR->code.u.three.op3);
-            //     printf("\n");
-            //     break;
-            // case IR_DIV:
-            //     print_OP(IR->code.u.three.op1);
-            //     printf(" := ");
-            //     print_OP(IR->code.u.three.op2);
-            //     printf(" / ");
-            //     print_OP(IR->code.u.three.op3);
-            //     printf("\n");
-            //     break;
+            case IR_ADD:
+                print_OP(IR->code.u.three.op1);
+                printf(" := ");
+                print_OP(IR->code.u.three.op2);
+                printf(" + ");
+                print_OP(IR->code.u.three.op3);
+                printf("\n");
+                break;
+            case IR_SUB:
+                print_OP(IR->code.u.three.op1);
+                printf(" := ");
+                print_OP(IR->code.u.three.op2);
+                printf(" - ");
+                print_OP(IR->code.u.three.op3);
+                printf("\n");
+                break;
+            case IR_MUL:
+                print_OP(IR->code.u.three.op1);
+                printf(" := ");
+                print_OP(IR->code.u.three.op2);
+                printf(" * ");
+                print_OP(IR->code.u.three.op3);
+                printf("\n");
+                break;
+            case IR_DIV:
+                print_OP(IR->code.u.three.op1);
+                printf(" := ");
+                print_OP(IR->code.u.three.op2);
+                printf(" / ");
+                print_OP(IR->code.u.three.op3);
+                printf("\n");
+                break;
+            case IR_READ:
+                printf("READ ");
+                print_OP(IR->code.u.one.op);
+                printf("\n");
+                break;
+            case IR_WRITE:
+                printf("WRITE ");
+                print_OP(IR->code.u.one.op);
+                printf("\n");
+                break;
+            case IR_FUNC_CALL:
+                print_OP(IR->code.u.two.op1);
+                printf(" := CALL ");
+                print_OP(IR->code.u.two.op2);
+                printf("\n");
+                break;
+            case IR_ARG:
+                printf("ARG ");
+                print_OP(IR->code.u.one.op);
+                printf("\n");
+                break;
             default:
                 printf("default\n");
                 break;
@@ -209,7 +237,7 @@ void translate_FunDec(Tnode *node)
 {
     // 生成操作符
     Operand op = (Operand)malloc(sizeof(Operand_));
-    op->kind = OP_VARIABLE;
+    op->kind = OP_FUNCTION;
     strcpy(op->u.value, node->lchild->value);
 
     // 生成中间代码
@@ -259,15 +287,52 @@ void translate_CompSt(Tnode *node)
         return;
     if (!strcmp(node->lchild->rsibling->rsibling->name, "RC"))
     {
-        if (!strcmp(node->lchild->rsibling->name, "DefList")) {}
-            // DefList(node->lchild->rsibling);
+        if (!strcmp(node->lchild->rsibling->name, "DefList"))
+            translate_DefList(node->lchild->rsibling);
         else if (!strcmp(node->lchild->rsibling->name, "StmtList"))
             translate_StmtList(node->lchild->rsibling);
         return;
     }
-    // DefList(node->lchild->rsibling);
+    translate_DefList(node->lchild->rsibling);
     translate_StmtList(node->lchild->rsibling->rsibling);
     // 因为DefList和StmtList都可以为空产生式，所以如果这里不进行比较，会导致传入错误结点，导致后续分析出错，出现段错误
+}
+
+/* DefList */
+void translate_DefList(Tnode *node)
+{
+    if (node == NULL)   // 空产生式
+        return;
+    translate_Def(node->lchild);
+    translate_DefList(node->lchild->rsibling);
+}
+
+/* Def */
+void translate_Def(Tnode *node)
+{
+    translate_DecList(node->lchild->rsibling);
+}
+
+/* DecList */
+void translate_DecList(Tnode *node)
+{
+    translate_Dec(node->lchild);
+    if (node->lchild->rsibling)
+    {
+        // 对于逗号，进行递归调用
+        translate_DecList(node->lchild->rsibling->rsibling);
+    }
+}
+
+/* Dec */
+void translate_Dec(Tnode *node)
+{
+    Operand op = new_var();
+    translate_VarDec(node->lchild, op);
+    if (node->lchild->rsibling != NULL)
+    {
+        translate_Exp(node->lchild->rsibling->rsibling, op);
+    }
 }
 
 /* StmtList */
@@ -353,7 +418,7 @@ void translate_Cond(Tnode *node, Operand label_true, Operand label_false)
         translate_Exp(node->lchild, t1);
         translate_Exp(node->lchild->rsibling->rsibling, t2);
 
-        Operand op = get_relop(node->lchild->rsibling);
+        Operand op = new_relop(node->lchild->rsibling->value);
         InterCodes ir = new_IR(IR_IF, 4, t1, op, t2, label_true);
         insertList(IR_Head, ir);
         InterCodes ir_goto = new_IR(IR_GOTO, 1, label_false);
@@ -384,12 +449,8 @@ void translate_Cond(Tnode *node, Operand label_true, Operand label_false)
         Operand t1 = new_temp();
         translate_Exp(node, t1);
 
-        Operand op1 = (Operand)malloc(sizeof(Operand_));
-        op1->kind = OP_RELOP;
-        strcpy(op1->u.value, "!=");
-        Operand op2 =(Operand)malloc(sizeof(Operand_));
-        op2->kind = OP_CONSTANT;
-        strcpy(op2->u.value, "0");
+        Operand op1 = new_relop("!=");       
+        Operand op2 = new_constant("0");
 
         InterCodes ir_if = new_IR(IR_IF, 4, t1, op1, op2, label_true);
         insertList(IR_Head, ir_if);
@@ -404,21 +465,70 @@ void translate_Exp(Tnode *node, Operand place)
 {
     if (!strcmp(node->lchild->name, "INT"))
     {
-        Operand op = (Operand)malloc(sizeof(Operand_));
-        op->kind = OP_CONSTANT;
-        strcpy(op->u.value, node->lchild->value);
+        Operand op = new_constant(node->lchild->value);
         InterCodes ir = new_IR(IR_ASSIGN, 2, place, op);
         insertList(IR_Head, ir);
     }
     else if (!strcmp(node->lchild->name, "ID"))
     {
-        Operand op = get_op_from_var_map(var_map, node->lchild->value);
-        // if (op == NULL)
-        // {
-        //     printf("op is null\n");
-        // }
-        InterCodes ir = new_IR(IR_ASSIGN, 2, place, op);
-        insertList(IR_Head, ir);
+        if (node->lchild->rsibling == NULL)   // ID
+        {
+            Operand op = get_op_from_var_map(var_map, node->lchild->value);
+            // if (op == NULL)
+            // {
+            //     printf("op is null\n");
+            // }
+            InterCodes ir = new_IR(IR_ASSIGN, 2, place, op);
+            insertList(IR_Head, ir);
+        }
+        else if (node->lchild->rsibling->rsibling->rsibling == NULL)  // ID LP RP
+        {
+            if (!strcmp(node->lchild->value, "read"))
+            {
+                InterCodes ir = new_IR(IR_READ, 1, place);
+                insertList(IR_Head, ir);
+            }
+            else
+            {
+                Operand op = (Operand)malloc(sizeof(Operand_));
+                op->kind = OP_FUNCTION;
+                strcmp(op->u.value, node->lchild->value);
+                InterCodes ir = new_IR(IR_FUNC_CALL, 2, place, op);
+                insertList(IR_Head, ir);
+            }
+        }
+        else    // ID LP Args RP
+        {
+            arg_list_node arg_list = (arg_list_node)malloc(sizeof(arg_list_node_));
+            arg_list->next = NULL;
+            translate_Args(node->lchild->rsibling->rsibling, arg_list);
+            if (!strcmp(node->lchild->value, "write"))
+            {
+                InterCodes ir_write = new_IR(IR_WRITE, 1, arg_list->next->op);
+                insertList(IR_Head, ir_write);
+                if (place != NULL)
+                {
+                    Operand op_0 = new_constant("0");
+                    InterCodes ir_0 = new_IR(IR_ASSIGN, 2, place, op_0);
+                    insertList(IR_Head, ir_0);
+                }
+            }
+            else
+            {
+                arg_list_node p = arg_list->next;
+                while (p)
+                {
+                    InterCodes ir = new_IR(IR_ARG, 1, p->op);
+                    insertList(IR_Head, ir);
+                    p = p->next;
+                }
+                Operand op = (Operand)malloc(sizeof(Operand_));
+                op->kind = OP_FUNCTION;
+                strcmp(op->u.value, node->lchild->value);
+                InterCodes ir_call = new_IR(IR_FUNC_CALL, 2, place, op);
+                insertList(IR_Head, ir_call);
+            }
+        }
     }
     else if (!strcmp(node->lchild->rsibling->name, "ASSIGNOP"))
     {
@@ -446,11 +556,129 @@ void translate_Exp(Tnode *node, Operand place)
     }
     else if (!strcmp(node->lchild->rsibling->name, "PLUS"))
     {
-        
+        Operand t1 = new_temp(), t2 = new_temp();
+        translate_Exp(node->lchild, t1);
+        translate_Exp(node->lchild->rsibling->rsibling, t2);
+        InterCodes ir = new_IR(IR_ADD, 3, place, t1, t2);
+        insertList(IR_Head, ir);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "MINUS"))
+    {
+        Operand t1 = new_temp(), t2 = new_temp();
+        translate_Exp(node->lchild, t1);
+        translate_Exp(node->lchild->rsibling->rsibling, t2);
+        InterCodes ir = new_IR(IR_SUB, 3, place, t1, t2);
+        insertList(IR_Head, ir);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "STAR"))
+    {
+        Operand t1 = new_temp(), t2 = new_temp();
+        translate_Exp(node->lchild, t1);
+        translate_Exp(node->lchild->rsibling->rsibling, t2);
+        InterCodes ir = new_IR(IR_MUL, 3, place, t1, t2);
+        insertList(IR_Head, ir);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "DIV"))
+    {
+        Operand t1 = new_temp(), t2 = new_temp();
+        translate_Exp(node->lchild, t1);
+        translate_Exp(node->lchild->rsibling->rsibling, t2);
+        InterCodes ir = new_IR(IR_DIV, 3, place, t1, t2);
+        insertList(IR_Head, ir);
     }
     else if (!strcmp(node->lchild->name, "MINUS"))
     {
+        Operand t1 = new_temp();
+        translate_Exp(node->lchild->rsibling, t1);
+        if (place != NULL)
+        {
+            Operand t2 = new_constant("0");
+            InterCodes ir = new_IR(IR_SUB, 3, place, t2, t1);
+            insertList(IR_Head, ir);
+        }
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "RELOP"))
+    {
+        if (place == NULL)
+            printf("Line %d: place is NULL\n", node->lineno);
+        Operand label1 = new_label(), label2 = new_label();
+        Operand t_0 = new_constant("0");
+        Operand t_1 = new_constant("1");
 
+        InterCodes ir = new_IR(IR_ASSIGN, 2, place, t_0);
+        insertList(IR_Head, ir);
+        translate_Cond(node, label1, label2);  // code1
+        InterCodes ir1 = new_IR(IR_LABEL, 1, label1);
+        insertList(IR_Head, ir1);
+        InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
+        insertList(IR_Head, ir2);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "AND"))
+    {
+        if (place == NULL)
+            printf("Line %d: place is NULL\n", node->lineno);
+        Operand label1 = new_label(), label2 = new_label();
+        Operand t_0 = new_constant("0");
+        Operand t_1 = new_constant("1");
+
+        InterCodes ir = new_IR(IR_ASSIGN, 2, place, t_0);
+        insertList(IR_Head, ir);
+        translate_Cond(node, label1, label2);  // code1
+        InterCodes ir1 = new_IR(IR_LABEL, 1, label1);
+        insertList(IR_Head, ir1);
+        InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
+        insertList(IR_Head, ir2);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "OR"))
+    {
+        if (place == NULL)
+            printf("Line %d: place is NULL\n", node->lineno);
+        Operand label1 = new_label(), label2 = new_label();
+        Operand t_0 = new_constant("0");
+        Operand t_1 = new_constant("1");
+
+        InterCodes ir = new_IR(IR_ASSIGN, 2, place, t_0);
+        insertList(IR_Head, ir);
+        translate_Cond(node, label1, label2);  // code1
+        InterCodes ir1 = new_IR(IR_LABEL, 1, label1);
+        insertList(IR_Head, ir1);
+        InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
+        insertList(IR_Head, ir2);
+    }
+    else if (!strcmp(node->lchild->name, "NOT"))
+    {
+        if (place == NULL)
+            printf("Line %d: place is NULL\n", node->lineno);
+        Operand label1 = new_label(), label2 = new_label();
+        Operand t_0 = new_constant("0");
+        Operand t_1 = new_constant("1");
+
+        InterCodes ir = new_IR(IR_ASSIGN, 2, place, t_0);
+        insertList(IR_Head, ir);
+        translate_Cond(node, label1, label2);  // code1
+        InterCodes ir1 = new_IR(IR_LABEL, 1, label1);
+        insertList(IR_Head, ir1);
+        InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
+        insertList(IR_Head, ir2);
+    }
+    else
+    {
+        printf("not done yet!\n");
+    }
+}
+
+void translate_Args(Tnode *node, arg_list_node arg_list)
+{
+    // 头插法
+    Operand t1 = new_temp();
+    translate_Exp(node->lchild, t1);
+    arg_list_node p = (arg_list_node)malloc(sizeof(arg_list_node_));
+    p->op = t1;
+    p->next = arg_list->next;
+    arg_list->next = p;   
+    if (node->lchild->rsibling != NULL)
+    {
+        translate_Args(node->lchild->rsibling->rsibling, arg_list);
     }
 }
 
@@ -484,12 +712,21 @@ Operand new_label(void)
     return label;
 }
 
+/* 生成常数 */
+Operand new_constant(char *value)
+{
+    Operand op = (Operand)malloc(sizeof(Operand_));
+    op->kind = OP_CONSTANT;
+    strcpy(op->u.value, value);
+    return op;
+}
+
 /* 获取判断符号 */
-Operand get_relop(Tnode *node)
+Operand new_relop(char *value)
 {
     Operand op = (Operand)malloc(sizeof(Operand_));
     op->kind = OP_RELOP;
-    strcpy(op->u.value, node->value);
+    strcpy(op->u.value, value);
     return op;
 }
 

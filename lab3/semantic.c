@@ -558,7 +558,10 @@ Type Exp(Tnode *node)
             {
                 FieldList argv = (FieldList)malloc(sizeof(FieldList_));   // 头指针
                 argv->tail = NULL;
-                Args(node->lchild->rsibling->rsibling, argv);
+                if (!strcmp(node->lchild->rsibling->rsibling->name, "Args"))
+                {
+                    Args(node->lchild->rsibling->rsibling, argv);
+                }
 
                 /* Error type 9 (比较形参和实参的数目和类型是否一致) */
                 FieldList p = type->u.function.argv, p_cmp = argv->tail;

@@ -1,4 +1,14 @@
-int func(int a, int b, int c)
+int main()
 {
-    a = b;
+    int n;
+    n = read();
+    if (n > 0) 
+    { 
+        write(1); 
+    }
+    else 
+    { 
+        write(0); 
+    }
+    return 0;
 }
