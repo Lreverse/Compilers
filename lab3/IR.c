@@ -436,52 +436,56 @@ void translate_Stmt(Tnode *node)
 /* 判断条件，进行跳转 */
 void translate_Cond(Tnode *node, Operand label_true, Operand label_false)
 {
-    if (!strcmp(node->lchild->rsibling->name, "RELOP"))
+    if (node->lchild->rsibling != NULL)
     {
-        Operand t1 = new_temp(), t2 = new_temp();
-        translate_Exp(node->lchild, t1);
-        translate_Exp(node->lchild->rsibling->rsibling, t2);
+        if (!strcmp(node->lchild->rsibling->name, "RELOP"))
+        {
+            Operand t1 = new_temp(), t2 = new_temp();
+            translate_Exp(node->lchild, t1);
+            translate_Exp(node->lchild->rsibling->rsibling, t2);
 
-        Operand op = new_relop(node->lchild->rsibling->value);
-        InterCodes ir = new_IR(IR_IF, 4, t1, op, t2, label_true);
-        insertList(IR_Head, ir);
-        InterCodes ir_goto = new_IR(IR_GOTO, 1, label_false);
-        insertList(IR_Head, ir_goto);
+            Operand op = new_relop(node->lchild->rsibling->value);
+            InterCodes ir = new_IR(IR_IF, 4, t1, op, t2, label_true);
+            insertList(IR_Head, ir);
+            InterCodes ir_goto = new_IR(IR_GOTO, 1, label_false);
+            insertList(IR_Head, ir_goto);
+            return;
+        }
+        else if (!strcmp(node->lchild->name, "NOT"))
+        {
+            translate_Cond(node->lchild->rsibling, label_false, label_true);
+            return;
+        }
+        else if (!strcmp(node->lchild->rsibling->name, "AND"))
+        {
+            Operand label1 = new_label();
+            translate_Cond(node->lchild, label1, label_false);
+            InterCodes ir = new_IR(IR_LABEL, 1, label1);
+            insertList(IR_Head, ir);
+            translate_Cond(node->lchild->rsibling->rsibling, label_true, label_false);
+            return;
+        }
+        else if (!strcmp(node->lchild->rsibling->name, "OR"))
+        {
+            Operand label1 = new_label();
+            translate_Cond(node->lchild, label_true, label1);
+            InterCodes ir = new_IR(IR_LABEL, 1, label1);
+            insertList(IR_Head, ir);
+            translate_Cond(node->lchild->rsibling->rsibling, label_true, label_false);
+            return;
+        }
     }
-    else if (!strcmp(node->lchild->name, "NOT"))
-    {
-        translate_Cond(node->lchild->rsibling, label_false, label_true);
-    }
-    else if (!strcmp(node->lchild->rsibling->name, "AND"))
-    {
-        Operand label1 = new_label();
-        translate_Cond(node->lchild, label1, label_false);
-        InterCodes ir = new_IR(IR_LABEL, 1, label1);
-        insertList(IR_Head, ir);
-        translate_Cond(node->lchild->rsibling->rsibling, label_true, label_false);
-    }
-    else if (!strcmp(node->lchild->rsibling->name, "OR"))
-    {
-        Operand label1 = new_label();
-        translate_Cond(node->lchild, label_true, label1);
-        InterCodes ir = new_IR(IR_LABEL, 1, label1);
-        insertList(IR_Head, ir);
-        translate_Cond(node->lchild->rsibling->rsibling, label_true, label_false);
-    }
-    else
-    {
-        Operand t1 = new_temp();
-        translate_Exp(node, t1);
+    Operand t1 = new_temp();
+    translate_Exp(node, t1);
 
-        Operand op1 = new_relop("!=");       
-        Operand op2 = new_constant("0");
+    Operand op1 = new_relop("!=");       
+    Operand op2 = new_constant("0");
 
-        InterCodes ir_if = new_IR(IR_IF, 4, t1, op1, op2, label_true);
-        insertList(IR_Head, ir_if);
+    InterCodes ir_if = new_IR(IR_IF, 4, t1, op1, op2, label_true);
+    insertList(IR_Head, ir_if);
 
-        InterCodes ir_goto = new_IR(IR_GOTO, 1, label_false);
-        insertList(IR_Head, ir_goto);
-    }
+    InterCodes ir_goto = new_IR(IR_GOTO, 1, label_false);
+    insertList(IR_Head, ir_goto);
 }
 
 /* Exp */
@@ -553,6 +557,10 @@ void translate_Exp(Tnode *node, Operand place)
                 Operand op = (Operand)malloc(sizeof(Operand_));
                 op->kind = OP_FUNCTION;
                 strcpy(op->u.value, node->lchild->value);
+                if (place == NULL)
+                {
+                    place = new_temp();
+                }
                 InterCodes ir_call = new_IR(IR_FUNC_CALL, 2, place, op);
                 insertList(IR_Head, ir_call);
             }
@@ -739,6 +747,7 @@ void translate_Exp(Tnode *node, Operand place)
     }
 }
 
+/* Args */
 void translate_Args(Tnode *node, arg_list_node arg_list)
 {
     // 头插法

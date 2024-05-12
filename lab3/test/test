@@ -1,5 +1,13 @@
+int sort(int x)
+{
+    return x;
+}
+
 int main()
 {
-    int n[3];
-    n[2] = 33;
+	int m;
+	m = read();
+	if (m >= 100) write(-1);
+	else sort(m);
+	return 0;
 }

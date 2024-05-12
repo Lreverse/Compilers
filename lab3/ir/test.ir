@@ -1,2 +1,7 @@
 FUNCTION main :
 DEC v1 12
+t4 := #2
+t3 := t4 * #4
+t1 := &v1 + t3
+t2 := #33
+*t1 := t2
