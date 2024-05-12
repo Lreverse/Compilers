@@ -1,5 +1,6 @@
 /.vscode
 /lab2/lab_test
+/lab3/lab_test
 lex.yy.c
 syntax.tab.c
 syntax.tab.h

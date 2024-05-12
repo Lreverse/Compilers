@@ -612,6 +612,8 @@ void translate_Exp(Tnode *node, Operand place)
         insertList(IR_Head, ir1);
         InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
         insertList(IR_Head, ir2);
+        InterCodes ir3 = new_IR(IR_LABEL, 1, label2);
+        insertList(IR_Head, ir3);
     }
     else if (!strcmp(node->lchild->rsibling->name, "AND"))
     {
@@ -628,6 +630,8 @@ void translate_Exp(Tnode *node, Operand place)
         insertList(IR_Head, ir1);
         InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
         insertList(IR_Head, ir2);
+        InterCodes ir3 = new_IR(IR_LABEL, 1, label2);
+        insertList(IR_Head, ir3);
     }
     else if (!strcmp(node->lchild->rsibling->name, "OR"))
     {
@@ -644,6 +648,8 @@ void translate_Exp(Tnode *node, Operand place)
         insertList(IR_Head, ir1);
         InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
         insertList(IR_Head, ir2);
+        InterCodes ir3 = new_IR(IR_LABEL, 1, label2);
+        insertList(IR_Head, ir3);
     }
     else if (!strcmp(node->lchild->name, "NOT"))
     {
@@ -660,6 +666,8 @@ void translate_Exp(Tnode *node, Operand place)
         insertList(IR_Head, ir1);
         InterCodes ir2 = new_IR(IR_ASSIGN, 2, place, t_1);
         insertList(IR_Head, ir2);
+        InterCodes ir3 = new_IR(IR_LABEL, 1, label2);
+        insertList(IR_Head, ir3);
     }
     else if (!strcmp(node->lchild->name, "LP"))
     {

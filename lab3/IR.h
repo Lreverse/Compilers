@@ -47,12 +47,14 @@ typedef struct InterCodes_ {
     struct InterCodes_ *prev, *next;
 } InterCodes_;
 
+/* 存储变量的对应关系（v1对应的变量） */
 typedef struct Var_node_{
     Operand op;
     char *name;
     struct Var_node_ *next;
 } Var_node_;
 
+/* 参数传递链表 */
 typedef struct arg_list_node_{
     Operand op;
     struct arg_list_node_ *next;
