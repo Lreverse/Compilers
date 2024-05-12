@@ -1,14 +1,5 @@
 int main()
 {
-    int n;
-    n = read();
-    if (n > 0) 
-    { 
-        write(1); 
-    }
-    else 
-    { 
-        write(0); 
-    }
-    return 0;
+    int n[3];
+    n[2] = 33;
 }

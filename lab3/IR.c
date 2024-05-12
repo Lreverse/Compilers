@@ -75,6 +75,18 @@ void print_OP(Operand op)
         case OP_FUNCTION:
             printf("%s", op->u.value);
             break;
+        case OP_ADDRESS:
+            if (op->u.other.type == ADDRESS_VAR)
+                printf("&v%d", op->u.other.no);
+            else
+                printf("&t%d", op->u.other.no);
+            break;
+        case OP_REFER:
+            if (op->u.other.type == ADDRESS_VAR)
+                printf("*v%d", op->u.other.no);
+            else
+                printf("*t%d", op->u.other.no);
+            break;
         default:
             printf("\nprint_OP: no match\n");
             break;
@@ -189,6 +201,11 @@ void print_IR(InterCodes head)
                 print_OP(IR->code.u.one.op);
                 printf("\n");
                 break;
+            case IR_ARRAY:
+                printf("DEC ");
+                print_OP(IR->code.u.two.op1);
+                printf(" %d\n", atoi(IR->code.u.two.op2->u.value) * 4);
+                break;
             default:
                 printf("default\n");
                 break;
@@ -277,6 +294,13 @@ void translate_VarDec(Tnode *node, Operand op)
     if (!strcmp(node->lchild->name, "ID"))
     {
         insertVarMap(var_map, op, node->lchild->value);
+    }
+    else   // 数组（只处理一维数组）
+    {
+        Operand num = new_constant(node->lchild->rsibling->rsibling->value);
+        InterCodes ir = new_IR(IR_ARRAY, 2, op, num);
+        insertList(IR_Head, ir);
+        translate_VarDec(node->lchild, op);
     }
 }
 
@@ -469,6 +493,10 @@ void translate_Exp(Tnode *node, Operand place)
         InterCodes ir = new_IR(IR_ASSIGN, 2, place, op);
         insertList(IR_Head, ir);
     }
+    else if (!strcmp(node->lchild->name, "FLOAT"))
+    {
+        printf("float is not permitted\n");
+    }
     else if (!strcmp(node->lchild->name, "ID"))
     {
         if (node->lchild->rsibling == NULL)   // ID
@@ -549,7 +577,20 @@ void translate_Exp(Tnode *node, Operand place)
                 insertList(IR_Head, ir_option);
             }
         }
-        else
+        else if (!strcmp(node->lchild->lchild->rsibling->name, "LB"))  // 数组
+        {
+            Operand t1 = new_temp(), t2 = new_temp();
+            translate_Exp(node->lchild, t1);
+            translate_Exp(node->lchild->rsibling->rsibling, t2);
+
+            Operand t_refer = (Operand)malloc(sizeof(Operand_));
+            t_refer->kind = OP_REFER;
+            t_refer->u.other.type = ADDRESS_TEMP;
+            t_refer->u.other.no = t1->u.no;
+            InterCodes ir = new_IR(IR_ASSIGN, 2, t_refer, t2);
+            insertList(IR_Head, ir);
+        }
+        else // 结构体
         {
             printf("left value is not a single variable\n");
         }
@@ -672,6 +713,25 @@ void translate_Exp(Tnode *node, Operand place)
     else if (!strcmp(node->lchild->name, "LP"))
     {
         translate_Exp(node->lchild->rsibling, place);
+    }
+    else if (!strcmp(node->lchild->rsibling->name, "LB"))
+    {
+        if (!strcmp(node->lchild->lchild->name, "ID"))   // 一维数组
+        {
+            Operand t1 = new_temp(), t2 = new_temp();
+            Operand con_4 = new_constant("4");
+            translate_Exp(node->lchild->rsibling->rsibling, t2);
+            InterCodes ir = new_IR(IR_MUL, 3, t1, t2, con_4);
+            insertList(IR_Head, ir);
+
+            Operand op = get_op_from_var_map(var_map, node->lchild->lchild->value);
+            Operand t_address = (Operand)malloc(sizeof(Operand_));
+            t_address->kind = OP_ADDRESS;
+            t_address->u.other.type = ADDRESS_VAR;
+            t_address->u.other.no = op->u.no;
+            InterCodes ir_adrress = new_IR(IR_ADD, 3, place, t_address, t1);
+            insertList(IR_Head, ir_adrress);
+        }
     }
     else
     {

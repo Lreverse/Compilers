@@ -13,20 +13,22 @@ typedef struct InterCode_* InterCode;
 typedef struct InterCodes_* InterCodes;
 typedef struct Var_node_* Var_node;
 typedef struct arg_list_node_* arg_list_node;
+enum Address_type { ADDRESS_VAR, ADDRESS_TEMP };
 
 typedef struct Operand_ 
 {
-    enum { OP_VARIABLE, OP_TEMP, OP_CONSTANT, OP_LABEL, OP_RELOP, OP_ADDRESS, OP_FUNCTION } kind;
+    enum { OP_VARIABLE, OP_TEMP, OP_CONSTANT, OP_LABEL, OP_RELOP, OP_FUNCTION, OP_ADDRESS, OP_REFER } kind;
     union {
         int no;
         char value[32];
+        struct { enum Address_type type; int no; } other;   // 数组使用
     } u;
 } Operand_;
 
 typedef struct InterCode_
 {
     enum IR_TYPE { 
-            IR_FUNCTION, IR_PARAM, IR_RETURN,
+            IR_FUNCTION, IR_PARAM, IR_RETURN, IR_ARRAY,
             IR_LABEL, IR_GOTO, IR_IF, 
             IR_ASSIGN, IR_ADD, IR_SUB, IR_MUL, IR_DIV,
             IR_READ, IR_WRITE, 
