@@ -7,7 +7,7 @@ InterCodes IR_Head = NULL;   // 链表头指针，头节点在主函数生成
 Var_node var_map = NULL;     // 变量映射表头指针，头节点在主函数生成
 
 
-/* 初始化双循环链表 */
+/* 初始化双向循环链表 */
 void initList(InterCodes head)
 {
     head->prev = head;

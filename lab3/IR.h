@@ -36,14 +36,13 @@ typedef struct InterCode_
         } kind;
     union {
         struct { Operand op; } one;   // 只有一个操作数
-        struct { Operand op1, op2; } two;   // 有两个操作数
-        struct { Operand op1, op2, op3; } three;
-        struct { Operand op1, op2, op3, op4; } four;
-        // struct { Operand left, right; } assign;
+        struct { Operand op1, op2; } two;   // 两个操作数
+        struct { Operand op1, op2, op3; } three;  // 三个操作数 
+        struct { Operand op1, op2, op3, op4; } four;  // 四个操作数
     } u;
 } InterCode_;
 
-/* 双向链表 */
+/* 双向循环链表 */
 typedef struct InterCodes_ {
     InterCode_ code;
     struct InterCodes_ *prev, *next;
